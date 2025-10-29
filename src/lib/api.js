@@ -70,7 +70,7 @@ export const AudioAPI = {
   },
   updateManualAudit: async (userId, audioId, responses) => {
     const { data } = await api.post(`/v1.3/manualAudit/update-manualAudit/${userId}/`, responses, {
-      params: { audioid: audioId },
+      params: { audioId },
     });
     return data;
   },

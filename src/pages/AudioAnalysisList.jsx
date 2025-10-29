@@ -22,6 +22,8 @@ export default function AudioAnalysisList() {
   const [filters, setFilters] = useState({ audioStatus: [], sentiment: [], uploadSource: [] });
   const [pageSize, setPageSize] = useState(-1);
   const [page, setPage] = useState(1);
+  const [sortKey, setSortKey] = useState('createdDate');
+  const [sortDir, setSortDir] = useState('desc');
 
   async function load() {
     try {
@@ -53,7 +55,112 @@ export default function AudioAnalysisList() {
     loadOptions();
   }, []);
 
-  const filtered = rows; // server-side filtering
+  function toSeconds(hms) {
+    if (!hms) return 0;
+    const s = String(hms).trim();
+    const parts = s.split(':').map(Number).filter((n)=>!Number.isNaN(n));
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  const handleSort = (key) => {
+    if (sortKey === key) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    const arr = [...rows];
+    const dir = sortDir === 'desc' ? -1 : 1;
+    arr.sort((a,b) => {
+      const key = sortKey;
+      let av, bv;
+      switch(key){
+        case 'fileName':
+          av = a.fileName || a.filename || '';
+          bv = b.fileName || b.filename || '';
+          return av.localeCompare(bv) * dir;
+        case 'duration':
+          av = toSeconds(a.duration || a.fileDuration);
+          bv = toSeconds(b.duration || b.fileDuration);
+          return (av - bv) * dir;
+        case 'uploadSource':
+          av = a.uploadSource || '';
+          bv = b.uploadSource || '';
+          return av.localeCompare(bv) * dir;
+        case 'executiveName':
+          av = a.executiveName || a.username || a.userName || '';
+          bv = b.executiveName || b.username || b.userName || '';
+          return av.localeCompare(bv) * dir;
+        case 'managerName':
+          av = a.managerName || a.manager || '';
+          bv = b.managerName || b.manager || '';
+          return av.localeCompare(bv) * dir;
+        case 'ofeAccuracy': {
+          const ao = Number(a.ofeAccuracy ?? a.salespersonScore ?? a.weightedScore ?? a.OFE_Accuracy ?? 0) || 0;
+          const bo = Number(b.ofeAccuracy ?? b.salespersonScore ?? b.weightedScore ?? b.OFE_Accuracy ?? 0) || 0;
+          return (ao - bo) * dir;
+        }
+        case 'sentiment': {
+          const as = String(a.sentiment || a.overallsentiment || a.overallSentiment || a.overall_sentiment || '').toLowerCase();
+          const bs = String(b.sentiment || b.overallsentiment || b.overallSentiment || b.overall_sentiment || '').toLowerCase();
+          return as.localeCompare(bs) * dir;
+        }
+        case 'status': {
+          av = a.audiostatus || a.audioStatus || a.status || '';
+          bv = b.audiostatus || b.audioStatus || b.status || '';
+          return av.localeCompare(bv) * dir;
+        }
+        case 'createdDate':
+        default:
+          av = Date.parse(a.createdDate || a.createdAt || 0);
+          bv = Date.parse(b.createdDate || b.createdAt || 0);
+          return (av - bv) * dir;
+      }
+    });
+    return arr;
+  }, [rows, sortKey, sortDir]);
+
+  function normalizeSentiment(val) {
+    const s = String(val || '').toUpperCase();
+    if (s.includes('POSITIVE')) return 'POSITIVE';
+    if (s.includes('NEGATIVE')) return 'NEGATIVE';
+    if (s.includes('NEUTRAL')) return 'NEUTRAL';
+    return '';
+  }
+
+  function normalizeText(val){
+    return String(val || '').trim().toLowerCase();
+  }
+
+  const filtered = useMemo(() => {
+    const hasAnyFilter = (filters.audioStatus?.length || filters.sentiment?.length || filters.uploadSource?.length);
+    if (!hasAnyFilter) return sorted;
+    const st = new Set((filters.audioStatus||[]).map((x)=>normalizeText(x)));
+    const se = new Set((filters.sentiment||[]).map((x)=>String(x).toUpperCase()));
+    const us = new Set((filters.uploadSource||[]).map((x)=>normalizeText(x)));
+    return sorted.filter((r)=>{
+      let ok = true;
+      if (st.size){
+        const status = normalizeText(r.audiostatus || r.audioStatus || r.status);
+        ok = ok && st.has(status);
+      }
+      if (se.size){
+        const sent = normalizeSentiment(r.sentiment || r.overallsentiment || r.overallSentiment || r.overall_sentiment);
+        ok = ok && se.has(sent);
+      }
+      if (us.size){
+        const src = normalizeText(r.uploadSource);
+        ok = ok && us.has(src);
+      }
+      return ok;
+    });
+  }, [sorted, filters]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / (pageSize === -1 ? filtered.length : pageSize)));
   const pageRows = useMemo(() => {
@@ -95,15 +202,15 @@ export default function AudioAnalysisList() {
             <thead className="text-left text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">SL No</th>
-                <th className="py-2 pr-4">File Name</th>
-                <th className="py-2 pr-4">Duration (HH:MM:SS)</th>
+                <th className="py-2 pr-4 cursor-pointer select-none" onClick={()=>handleSort('fileName')}>File Name {sortKey==='fileName' ? (sortDir==='asc' ? '▲':'▼') : '↕'}</th>
+                <th className="py-2 pr-4 cursor-pointer select-none" onClick={()=>handleSort('duration')}>Duration (HH:MM:SS) {sortKey==='duration' ? (sortDir==='asc' ? '▲':'▼') : '↕'}</th>
                 <th className="py-2 pr-4">Upload Source</th>
-                <th className="py-2 pr-4">Executive Name</th>
+                <th className="py-2 pr-4">Agent Name</th>
                 <th className="py-2 pr-4">Manager Name</th>
-                <th className="py-2 pr-4">OFE Accuracy</th>
+                <th className="py-2 pr-4 cursor-pointer select-none" onClick={()=>handleSort('ofeAccuracy')}>OFE Accuracy {sortKey==='ofeAccuracy' ? (sortDir==='asc' ? '▲':'▼') : '↕'}</th>
                 <th className="py-2 pr-4">Sentiment</th>
                 <th className="py-2 pr-4">Status</th>
-                <th className="py-2 pr-4">Created Date</th>
+                <th className="py-2 pr-4 cursor-pointer select-none" onClick={()=>handleSort('createdDate')}>Created Date {sortKey==='createdDate' ? (sortDir==='asc' ? '▲':'▼') : '↕'}</th>
                 <th className="py-2 pr-4">Action</th>
               </tr>
             </thead>
@@ -112,32 +219,51 @@ export default function AudioAnalysisList() {
                 <tr><td className="py-3" colSpan={11}>Loading...</td></tr>
               ) : pageRows.length ? (
                 pageRows.map((r, i) => {
-                  const idx = (page - 1) * pageSize + i + 1;
+                  const perPage = (pageSize === -1 ? filtered.length : pageSize);
+                  const idx = (page - 1) * perPage + i + 1;
                   const audioId = r.audioId || r.audio_id || r.id || r.audioID;
                   const execName = r.executiveName || r.username || r.userName || r.executive || '-';
-                  const ofe = r.ofeAccuracy ?? r.salespersonScore ?? r.weightedScore ?? r.OFE_Accuracy ?? '-';
-                  const sent = r.sentiment || r.overallsentiment || r.overallSentiment || r.overall_sentiment || '-';
-                  const status = r.audiostatus || r.audioStatus || r.status || '-';
+                  const ofeRaw = r.ofeAccuracy ?? r.salespersonScore ?? r.weightedScore ?? r.OFE_Accuracy;
+                  const ofe = (ofeRaw === null || ofeRaw === undefined || ofeRaw === '' || ofeRaw === '-') ? 0 : ofeRaw;
+                  const sent = r.sentiment || r.overallsentiment || r.overallSentiment || r.overall_sentiment || '';
+                  // If backend provides Call field, prefer it even if it's an empty string
+                  const hasCall = Object.prototype.hasOwnProperty.call(r, 'Call') || Object.prototype.hasOwnProperty.call(r, 'call');
+                  const status = hasCall ? (r.Call ?? r.call ?? '') : (r.audiostatus || r.audioStatus || r.status || '');
+                  const sentimentUi = (()=>{
+                    const s = String(sent).toLowerCase();
+                    if (s.includes('positive')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300">🙂<span className="hidden sm:inline">Positive</span></span>;
+                    if (s.includes('negative')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-600/20 text-rose-300">🙁<span className="hidden sm:inline">Negative</span></span>;
+                    if (s.includes('neutral')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-600/20 text-slate-300">😐<span className="hidden sm:inline">Neutral</span></span>;
+                    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600/20 text-amber-300">?<span className="hidden sm:inline">Unknown</span></span>;
+                  })();
+                  const statusUi = (()=>{
+                    const s = String(status).toLowerCase();
+                    if (!hasCall && s.includes('processed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-cyan-600/70 text-black">Processed</span>;
+                    if (s.includes('insufficient')) return <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500/80 text-black">Insufficient Audio Duration</span>;
+                    if (s.includes('failed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-rose-500/80 text-black">Failed</span>;
+                    if (s) return <span className="inline-block px-2 py-0.5 rounded-md bg-indigo-500/30 text-indigo-200 capitalize">{s}</span>;
+                    return <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-700 text-neutral-200">-</span>;
+                  })();
                   return (
-                    <tr key={audioId || idx} className="border-t border-neutral-800 hover:bg-neutral-900/40">
+                    <tr key={audioId || idx} className="border-t border-neutral-800 hover:bg-neutral-900/40 cursor-pointer" onClick={()=>navigate(`/audio-details/${audioId}`)}>
                       <td className="py-2 pr-4">{idx}</td>
-                      <td className="py-2 pr-4 text-indigo-400 underline cursor-pointer" onClick={()=>navigate(`/audio-details/${audioId}`)}>{r.fileName || r.filename || audioId}</td>
+                      <td className="py-2 pr-4 text-indigo-400 underline">{r.fileName || r.filename || audioId}</td>
                       <td className="py-2 pr-4">{r.duration || r.fileDuration || '-'}</td>
-                      <td className="py-2 pr-4">{r.uploadSource || '-'}</td>
+                      <td className="py-2 pr-4">{r.uploadSource ? <span title={r.uploadSource}>🔗</span> : '•'}</td>
                       <td className="py-2 pr-4">{execName}</td>
                       <td className="py-2 pr-4">{r.managerName || r.manager || '-'}</td>
                       <td className="py-2 pr-4">{ofe}</td>
-                      <td className="py-2 pr-4">{sent}</td>
-                      <td className="py-2 pr-4">{status}</td>
+                      <td className="py-2 pr-4">{sentimentUi}</td>
+                      <td className="py-2 pr-4">{statusUi}</td>
                       <td className="py-2 pr-4">{r.createdDate || r.createdAt || '-'}</td>
                       <td className="py-2 pr-4">
-                        <button onClick={()=>navigate(`/audio-details/${audioId}`)} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-xs">View</button>
+                        <button onClick={(e)=>{ e.stopPropagation(); navigate(`/audio-details/${audioId}`); }} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-xs">View</button>
                       </td>
                     </tr>
                   );
                 })
               ) : (
-                <tr><td className="py-3 text-neutral-400" colSpan={11}>No records</td></tr>
+                <tr><td className="py-3 text-neutral-400" colSpan={11}>{(filters.audioStatus?.length || filters.sentiment?.length || filters.uploadSource?.length) ? 'No results found' : 'No records'}</td></tr>
               )}
             </tbody>
           </table>
