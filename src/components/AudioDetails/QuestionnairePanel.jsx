@@ -27,23 +27,27 @@ export default function QuestionnairePanel({ groups, openSections, setOpenSectio
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-neutral-400">Manual Answer:</span>
-                      <select value={q.answer ?? q.manualAnswer ?? ''} onChange={(e) => {
-                        const val = e.target.value;
-                        setInsights((prev) => {
-                          const next = { ...prev };
-                          const targetGroups = next.questionnaireGroups || [{ title: 'Questionnaire', items: next.questionnaire || [] }];
-                          const tg = targetGroups[gi];
-                          const arr = tg.items || tg.questions || [];
-                          arr[i] = { ...arr[i], answer: val };
-                          if (next.questionnaireGroups) next.questionnaireGroups = [...targetGroups];
-                          else next.questionnaire = [...arr];
-                          return next;
-                        });
-                      }} className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5">
+                      <select
+                        value={(q.answer ?? q.manualAnswer) === true ? 'true' : ((q.answer ?? q.manualAnswer) === false ? 'false' : '')}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          const boolVal = v === 'true' ? true : v === 'false' ? false : undefined;
+                          setInsights((prev) => {
+                            const next = { ...prev };
+                            const targetGroups = next.questionnaireGroups || [{ title: 'Questionnaire', items: next.questionnaire || [] }];
+                            const tg = targetGroups[gi];
+                            const arr = tg.items || tg.questions || [];
+                            arr[i] = { ...arr[i], answer: boolVal };
+                            if (next.questionnaireGroups) next.questionnaireGroups = [...targetGroups];
+                            else next.questionnaire = [...arr];
+                            return next;
+                          });
+                        }}
+                        className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5"
+                      >
                         <option value="">Select</option>
                         <option value="true">true</option>
                         <option value="false">false</option>
-                        <option value="na">Not Applicable</option>
                       </select>
                     </div>
                   </div>

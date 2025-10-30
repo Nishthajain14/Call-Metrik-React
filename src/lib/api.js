@@ -69,9 +69,11 @@ export const AudioAPI = {
     return data; // expects a URL string or object with url
   },
   updateManualAudit: async (userId, audioId, responses) => {
-    const { data } = await api.post(`/v1.3/manualAudit/update-manualAudit/${userId}/`, responses, {
-      params: { audioId },
-    });
+    const { data } = await api.post(
+      `/v1.3/manualAudit/update-manualAudit/${userId}/`,
+      responses,
+      { params: { audioId } }
+    );
     return data;
   },
 };

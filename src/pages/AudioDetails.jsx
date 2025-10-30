@@ -180,26 +180,30 @@ export default function AudioDetails() {
   async function onSaveQuestionnaire(updated) {
     try {
       setSaving(true);
-      // Build payload expected by backend: list of { qCode, manualAudit }
-      const items = [];
+      // Build payload expected by backend: { userId, audioId, responses: [{ qCode, manualAudit: boolean }] }
+      const responses = [];
       (updated || []).forEach((g) => {
         (g.items || g.questions || []).forEach((q) => {
-          if (q.qCode) {
-            let boolVal;
-            if (typeof q.answer === 'string') {
-              if (q.answer === 'true') boolVal = true;
-              else if (q.answer === 'false') boolVal = false;
-              else boolVal = null;
-            } else if (typeof q.answer === 'boolean') {
-              boolVal = q.answer;
-            } else if (typeof q.manualAnswer === 'boolean') {
-              boolVal = q.manualAnswer;
-            }
-            items.push({ qCode: q.qCode, manualAudit: boolVal });
+          if (!q?.qCode) return;
+          const val = typeof q.answer === 'boolean' ? q.answer : (typeof q.manualAnswer === 'boolean' ? q.manualAnswer : undefined);
+          if (typeof val === 'boolean') {
+            responses.push({ qCode: q.qCode, manualAudit: val });
           }
         });
       });
-      await AudioAPI.updateManualAudit(USER_ID, audioId, items);
+      if (!responses.length) {
+        alert('Please answer at least one question (true/false) before submitting.');
+        return;
+      }
+      // Debug logs to verify payload and identifiers
+      try {
+        console.group('Manual Audit Submit');
+        console.log('userId:', USER_ID, 'audioId:', audioId);
+        console.log('responses count:', responses.length);
+        console.table(responses);
+      } catch {}
+
+      await AudioAPI.updateManualAudit(USER_ID, audioId, responses);
       // optimistic store
       setInsights((prev) => ({ ...prev, questionnaireGroups: updated }));
     } catch (e) {

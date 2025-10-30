@@ -56,8 +56,8 @@ export default function AudioAnalysisMonthly() {
             <thead className="text-left text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Month</th>
-                <th className="py-2 pr-4">TotalRecords</th>
-                <th className="py-2 pr-4">AverageCallDuration (HH:MM:SS)</th>
+                <th className="py-2 pr-4">Total Records</th>
+                <th className="py-2 pr-4">Average Call Duration (HH:MM:SS)</th>
                 <th className="py-2 pr-4">Positive%</th>
                 <th className="py-2 pr-4">Negative%</th>
                 <th className="py-2 pr-4">Neutral%</th>
