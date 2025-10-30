@@ -8,7 +8,7 @@ export default function Sidebar() {
     }`;
 
   return (
-    <aside className="h-screen w-64 bg-neutral-900 border-r border-neutral-800 hidden md:flex flex-col">
+    <aside className="fixed inset-y-0 left-0 w-64 bg-neutral-900 border-r border-neutral-800 hidden md:flex flex-col z-40">
       <div className="h-16 flex items-center px-6 text-xl font-semibold tracking-wide">CallMetriK</div>
       <nav className="flex-1 px-3 space-y-2">
         <NavLink to="/" className={navLinkClass} end>

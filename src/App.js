@@ -8,13 +8,14 @@ import AudioAnalysisList from './pages/AudioAnalysisList';
 import AudioDetails from './pages/AudioDetails';
 import './index.css';
 
-function AppLayout({ children }) {
+function AppLayout({ children, title }) {
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex">
+    <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
-        <Navbar />
-        <main className="p-4 md:p-6 space-y-6">{children}</main>
+      <Navbar title={title} />
+      {/* content container offset by fixed sidebar (md) and navbar */}
+      <div className="pt-16 md:ml-64">
+        <main className="min-h-[calc(100vh-4rem)] p-4 md:p-6 space-y-6 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
@@ -26,44 +27,24 @@ export default function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            <AppLayout>
-              <Dashboard />
-            </AppLayout>
-          }
+          element={<AppLayout title="Dashboard"><Dashboard /></AppLayout>}
         />
         <Route
           path="/audio-analysis"
-          element={
-            <AppLayout>
-              <AudioAnalysisMonthly />
-            </AppLayout>
-          }
+          element={<AppLayout title="Audio Analysis"><AudioAnalysisMonthly /></AppLayout>}
         />
         <Route
           path="/audio-analysis/:month"
-          element={
-            <AppLayout>
-              <AudioAnalysisList />
-            </AppLayout>
-          }
+          element={<AppLayout title="Audio Analysis"><AudioAnalysisList /></AppLayout>}
         />
         <Route
           path="/audio-details/:audioId"
-          element={
-            <AppLayout>
-              <AudioDetails />
-            </AppLayout>
-          }
+          element={<AppLayout title="Audio Details"><AudioDetails /></AppLayout>}
         />
-        <Route path="/upload" element={<AppLayout>Upload coming soon</AppLayout>} />
+        <Route path="/upload" element={<AppLayout title="Upload Audio">Upload coming soon</AppLayout>} />
         <Route
           path="/reports"
-          element={
-            <AppLayout>
-              <Reports />
-            </AppLayout>
-          }
+          element={<AppLayout title="Reports"><Reports /></AppLayout>}
         />
       </Routes>
     </BrowserRouter>

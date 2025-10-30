@@ -1,9 +1,9 @@
-import { Bell, User } from 'lucide-react';
+import { Bell } from 'lucide-react';
 
-export default function Navbar() {
+export default function Navbar({ title }) {
   return (
-    <header className="h-16 border-b border-neutral-800 flex items-center justify-between px-4 md:px-6 bg-neutral-950/80 backdrop-blur">
-      <div className="text-lg font-semibold">Overview</div>
+    <header className="fixed top-0 left-0 md:left-64 right-0 h-16 border-b border-neutral-800 flex items-center justify-between px-4 md:px-6 bg-neutral-950/80 backdrop-blur z-30">
+      <div className="text-lg font-semibold">{title}</div>
       <div className="flex items-center gap-3">
         <button className="p-2 rounded-lg hover:bg-neutral-800">
           <Bell size={18} />

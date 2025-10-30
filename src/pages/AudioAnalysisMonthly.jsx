@@ -36,7 +36,7 @@ export default function AudioAnalysisMonthly() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-xl font-semibold">Audio Analysis</div>
+        <div className="text-xl font-semibold">Monthwise Audio Analysis</div>
         <Link to="/upload" className="bg-indigo-600 hover:bg-indigo-500 text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
       </div>
 
