@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
-import { AudioAPI } from '../lib/api';
+import { ChevronLeft, Link2, FileText } from 'lucide-react';
+import { AudioAPI, AudioProcessAPI } from '../lib/api';
 
-const USER_ID = 1;
+const USER_ID = 7;
 
 function useQuery() {
   const { search } = useLocation();
@@ -25,6 +25,8 @@ export default function AudioAnalysisList() {
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState('createdDate');
   const [sortDir, setSortDir] = useState('desc');
+  const [busy, setBusy] = useState({}); // { [audioId]: true }
+  const [notice, setNotice] = useState({ type: '', text: '' });
 
   async function load() {
     try {
@@ -174,6 +176,38 @@ export default function AudioAnalysisList() {
     if (page > totalPages) setPage(1);
   }, [totalPages, page]);
 
+  async function handleProcess(audioId){
+    try{
+      setBusy((b)=>({ ...b, [audioId]: true }));
+      const res = await AudioProcessAPI.process(USER_ID, audioId);
+      try { console.group('Process Trigger'); console.log('audioId', audioId); console.log('response', res); console.groupEnd(); } catch {}
+      const msg = typeof res === 'string' ? res : (res?.message || 'Processing triggered');
+      setNotice({ type: 'ok', text: msg });
+      await load();
+    } catch(e){
+      const msg = e?.response?.data?.message || e?.message || 'Failed to start processing';
+      setNotice({ type: 'err', text: msg });
+    } finally{
+      setBusy((b)=>{ const x = { ...b }; delete x[audioId]; return x; });
+    }
+  }
+
+  async function handleReAudit(audioId){
+    try{
+      setBusy((b)=>({ ...b, [audioId]: true }));
+      const res = await AudioProcessAPI.reAudit(USER_ID, audioId);
+      try { console.group('Re-Audit Trigger'); console.log('audioId', audioId); console.log('response', res); console.groupEnd(); } catch {}
+      const msg = typeof res === 'string' ? res : (res?.message || 'Re-Audit triggered');
+      setNotice({ type: 'ok', text: msg });
+      await load();
+    } catch(e){
+      const msg = e?.response?.data?.message || e?.message || 'Failed to trigger re-audit';
+      setNotice({ type: 'err', text: msg });
+    } finally{
+      setBusy((b)=>{ const x = { ...b }; delete x[audioId]; return x; });
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -181,6 +215,9 @@ export default function AudioAnalysisList() {
           <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-300"><ChevronLeft size={18} /></button>
           <div className="text-xl font-semibold">Analysed Audio Files</div>
         </div>
+      {notice.text && (
+        <div className={`text-sm px-3 py-2 rounded-md border ${notice.type==='err' ? 'bg-rose-950/40 text-rose-300 border-rose-800':'bg-emerald-950/40 text-emerald-300 border-emerald-800'}`}>{notice.text}</div>
+      )}
         <div className="flex items-center gap-2">
           <select value={pageSize} onChange={(e)=>setPageSize(Number(e.target.value))} className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5">
             <option value={10}>10</option>
@@ -248,7 +285,15 @@ export default function AudioAnalysisList() {
                       <td className="py-2 pr-4">{idx}</td>
                       <td className="py-2 pr-4 text-indigo-400 underline">{r.fileName || r.filename || audioId}</td>
                       <td className="py-2 pr-4">{r.duration || r.fileDuration || '-'}</td>
-                      <td className="py-2 pr-4">{r.uploadSource ? <span title={r.uploadSource}>🔗</span> : '•'}</td>
+                      <td className="py-2 pr-4">
+                        {(()=>{
+                          const src = String(r.uploadSource || '').toLowerCase();
+                          if (!src) return '•';
+                          const isUrl = src.includes('url');
+                          const isDoc = src.includes('doc') || src.includes('file');
+                          return isUrl ? <span className="inline-flex items-center gap-1 text-neutral-300"><Link2 size={14}/> URL</span> : isDoc ? <span className="inline-flex items-center gap-1 text-neutral-300"><FileText size={14}/> Document</span> : <span className="inline-flex items-center gap-1 text-neutral-300"><FileText size={14}/> {r.uploadSource}</span>;
+                        })()}
+                      </td>
                       <td className="py-2 pr-4">{execName}</td>
                       <td className="py-2 pr-4">{r.managerName || r.manager || '-'}</td>
                       <td className="py-2 pr-4">{ofe}</td>
@@ -256,7 +301,31 @@ export default function AudioAnalysisList() {
                       <td className="py-2 pr-4">{statusUi}</td>
                       <td className="py-2 pr-4">{r.createdDate || r.createdAt || '-'}</td>
                       <td className="py-2 pr-4">
-                        <button onClick={(e)=>{ e.stopPropagation(); navigate(`/audio-details/${audioId}`); }} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-xs">View</button>
+                        {(()=>{
+                          const s = String(status).toLowerCase();
+                          if (s === 'process' || s === 'processed') return <span className="text-emerald-300">Done</span>;
+                          if (s === 'uploaded') return (
+                            <button
+                              onClick={(e)=>{ e.stopPropagation(); handleProcess(audioId); }}
+                              disabled={!!busy[audioId]}
+                              className="bg-indigo-600 hover:bg-indigo-500 rounded-md px-2 py-1 text-xs disabled:opacity-60"
+                            >
+                              {busy[audioId] ? '...' : 'Process'}
+                            </button>
+                          );
+                          if (s === 'not audited' || s === 'not_audited' || s==='nonaudited' || s==='notaudited') return (
+                            <button
+                              onClick={(e)=>{ e.stopPropagation(); handleReAudit(audioId); }}
+                              disabled={!!busy[audioId]}
+                              className="bg-violet-600 hover:bg-violet-500 rounded-md px-2 py-1 text-xs disabled:opacity-60"
+                            >
+                              {busy[audioId] ? '...' : 'Re-Audit'}
+                            </button>
+                          );
+                          if (s === 'processing') return <span className="text-amber-300">In-Progress</span>;
+                          if (s.includes('insufficient')) return <span>-</span>;
+                          return <span>-</span>;
+                        })()}
                       </td>
                     </tr>
                   );

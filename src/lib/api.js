@@ -69,6 +69,34 @@ export const AudioUploadAPI = {
   },
 };
 
+// Audio processing endpoints
+export const AudioProcessAPI = {
+  process: async (userId, audioIds) => {
+    const ids = (Array.isArray(audioIds) ? audioIds : [audioIds]).map((x)=>String(x));
+    // Swagger shows raw array body: ["<audioId>"]
+    const { data } = await api.post(`/v1.3/audio-process/process/${userId}`, ids);
+    return data;
+  },
+  reAudit: async (userId, audioIds) => {
+    const ids = (Array.isArray(audioIds) ? audioIds : [audioIds]).map((x)=>String(x));
+    try {
+      // 1) Some servers accept raw array
+      const { data } = await api.post(`/v1.3/audio-process/reAudit/${userId}`, ids);
+      return data;
+    } catch (e) {
+      try {
+        // 2) Others accept object
+        const { data } = await api.post(`/v1.3/audio-process/reAudit/${userId}`, { audioIdentifiers: ids });
+        return data;
+      } catch (e2) {
+        // 3) Fallback to empty body
+        const { data } = await api.post(`/v1.3/audio-process/reAudit/${userId}`, {});
+        return data;
+      }
+    }
+  },
+};
+
 export const AudioAPI = {
   monthlySummary: async (userId, year, params = {}) => {
     const { data } = await api.get(`/v1.3/monthlyData/getMonthWiseData/${userId}/${year}/`, { params });

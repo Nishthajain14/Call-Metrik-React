@@ -16,7 +16,7 @@ import KeywordsTable from '../components/AudioDetails/KeywordsTable';
 
  
 
-const USER_ID = 1;
+const USER_ID = 7;
 
 export default function AudioDetails() {
   const { audioId } = useParams();
@@ -117,12 +117,51 @@ export default function AudioDetails() {
             right: [],
             raw: base?.transcription?.transcription || '',
           },
-          sentiment: {
-            positive: base?.audioInsights?.overall_sentiment?.POSITIVE,
-            negative: base?.audioInsights?.overall_sentiment?.NEGATIVE,
-            neutral: base?.audioInsights?.overall_sentiment?.NEUTRAL,
-            timeline: extractTimeline(base?.audioInsights),
-          },
+          sentiment: (function(){
+            const overall = base?.audioInsights?.overall_sentiment || {};
+            const sm = base?.audioInsights?.smoothed_sentiment || {};
+            const lines = [];
+            // Normalize smoothed series: expect arrays of { time, sentiment_score, label }
+            const pushSeries = (name, color, arr) => {
+              if (!Array.isArray(arr) || !arr.length) return;
+              const data = arr.map((d,i)=>({ x: Number(d.time ?? i), y: Number(d.sentiment_score ?? d.score ?? 0) || 0 }));
+              lines.push({ name, color, data });
+            };
+            // Some APIs provide arrays with label per point; merge both if present
+            const maybe = [];
+            if (Array.isArray(sm.line1)) maybe.push(...sm.line1);
+            if (Array.isArray(sm.line2)) maybe.push(...sm.line2);
+            if (maybe.length && maybe[0] && (maybe[0].label || maybe.some(p=>p.label))){
+              const byLabel = {};
+              maybe.forEach(pt => {
+                const key = String(pt.label || 'Series').trim();
+                (byLabel[key] = byLabel[key] || []).push(pt);
+              });
+              const palette = { Agent: '#a78bfa', Customer: '#34d399' };
+              Object.entries(byLabel).forEach(([k, arr])=> pushSeries(k, palette[k] || '#60a5fa', arr));
+            } else {
+              // Fallback if separate lines exist
+              if (Array.isArray(sm.line1)) pushSeries('Line 1', '#60a5fa', sm.line1);
+              if (Array.isArray(sm.line2)) pushSeries('Line 2', '#34d399', sm.line2);
+            }
+            // Sentence-level
+            const sentences = (base?.audioInsights?.speaker_sentiment || []).map((s)=>({
+              speaker: s.speaker,
+              text: s.segments,
+              start: s.start_time,
+              end: s.end_time,
+              score: s.sentiment_score,
+              label: s.sentimentLabel,
+            }));
+            return {
+              positive: overall?.POSITIVE,
+              negative: overall?.NEGATIVE,
+              neutral: overall?.NEUTRAL,
+              timeline: extractTimeline(base?.audioInsights),
+              series: lines,
+              sentences,
+            };
+          })(),
           topics: (base?.audioInsights?.topic_extract || []).map(t => ({
             topic: t.Topic,
             content: t.content,
