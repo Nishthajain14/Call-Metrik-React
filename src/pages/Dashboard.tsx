@@ -51,7 +51,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   const [kpi, setKpi] = useState(null);
-  const [counts, setCounts] = useState([]);
+  const [counts, setCounts] = useState<any>([]);
   const [sentimentMonthly, setSentimentMonthly] = useState(null);
 
   const now = new Date();

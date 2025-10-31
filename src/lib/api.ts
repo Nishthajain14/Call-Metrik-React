@@ -11,7 +11,7 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (API_KEY) {
-    config.headers[API_KEY_HEADER] = API_KEY;
+    (config.headers as any)[API_KEY_HEADER] = API_KEY as any;
   }
   return config;
 });
@@ -82,11 +82,11 @@ export const DashboardAPI = {
 // Upload endpoints
 export const AudioUploadAPI = {
   // files: FileList | File[] | Blob[]
-  uploadFile: async (userId, files) => {
+  uploadFile: async (userId: any, files: any) => {
     const form = new FormData();
     const list = Array.from(files || []);
     // backend expects multiple "files" entries
-    list.forEach((f) => form.append('files', f));
+    list.forEach((f) => form.append('files', f as any));
     const { data } = await api.post(`/v1.3/audio_upload/upload-audio-file/${userId}`,
       form,
       { headers: { 'Content-Type': 'multipart/form-data' } }

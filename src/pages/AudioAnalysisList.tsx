@@ -36,9 +36,9 @@ export default function AudioAnalysisList() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [options, setOptions] = useState({});
+  const [options, setOptions] = useState<any>({});
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({ audioStatus: [], sentiment: [], uploadSource: [] });
+  const [filters, setFilters] = useState<{ audioStatus: string[]; sentiment: string[]; uploadSource: string[] }>({ audioStatus: [], sentiment: [], uploadSource: [] });
   const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState('createdDate');
@@ -52,7 +52,7 @@ export default function AudioAnalysisList() {
       const cached = readCache(cacheK);
       if (cached) { setRows(cached); setLoading(false); }
       else { setLoading(true); }
-      const params = {};
+      const params: any = {};
       if (filters.audioStatus?.length) params.audioStatus = filters.audioStatus.join(',');
       if (filters.sentiment?.length) params.sentiment = filters.sentiment.join(',');
       if (filters.uploadSource?.length) params.uploadSource = filters.uploadSource.join(',');
