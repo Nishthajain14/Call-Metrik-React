@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ReportsAPI } from '../lib/api';
+import { ReportsAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, FunnelChart, Funnel, LabelList } from 'recharts';
 
-const USER_ID = 1;
+const USER_ID = 7;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+function readCache(key){ try{ const raw = sessionStorage.getItem(key); if(!raw) return null; const obj = JSON.parse(raw); if(!obj||!obj.t||Date.now()-obj.t> CACHE_TTL_MS) return null; return obj.v; }catch{ return null; } }
+function writeCache(key, value){ try{ sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); }catch{} }
+function keyReports(userId, callStatus, month, scoreType){ return `reports:${userId}:${callStatus}:${month}:${scoreType}`; }
 
 function Arrow({ up }) {
   return (
@@ -64,7 +68,21 @@ export default function Reports() {
     let on = true;
     async function load() {
       try {
-        setLoading(true);
+        const key = keyReports(USER_ID, callStatus, month, scoreType);
+        const cached = readCache(key);
+        if (cached && on){
+          setCards(cached.cards);
+          setCallDist(cached.callDist);
+          setPeak(cached.peak);
+          setFunnel(cached.funnel);
+          setAgentReport(cached.agentReport);
+          setEvents(cached.events);
+          setAdherence(cached.adherence);
+          setScoreCard(cached.scoreCard);
+          setLoading(false);
+        } else {
+          setLoading(true);
+        }
         const [cm, cd, ph, funnelRes, ar, ev, ad, sc] = await Promise.all([
           ReportsAPI.cardMetrics(USER_ID, { callStatus }),
           ReportsAPI.callTimeDistribution(USER_ID, { callStatus }),
@@ -84,8 +102,10 @@ export default function Reports() {
         setEvents(ev);
         setAdherence(Array.isArray(ad) ? ad : []);
         setScoreCard(sc);
+        writeCache(key, { cards: cm, callDist: cd, peak: ph, funnel: Array.isArray(funnelRes)?funnelRes:[], agentReport: ar, events: ev, adherence: Array.isArray(ad)?ad:[], scoreCard: sc });
       } catch (e) {
-        setError(e?.message || 'Failed to load reports');
+        const msg = getErrorMessage(e, 'Failed to load reports');
+        setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
       } finally {
         setLoading(false);
       }

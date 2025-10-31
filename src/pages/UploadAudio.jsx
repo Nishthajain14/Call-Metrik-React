@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Upload, Link2 } from 'lucide-react';
-import { AudioUploadAPI } from '../lib/api';
+import { AudioUploadAPI, getErrorMessage, isNetworkError } from '../lib/api';
 
-const USER_ID = 1;
+const USER_ID = 7;
 
 export default function UploadAudio() {
   const [tab, setTab] = useState('file');
@@ -65,7 +65,8 @@ export default function UploadAudio() {
       setMessage(typeof res === 'string' ? res : 'Uploaded successfully');
       setFiles([]);
     } catch (e) {
-      setError(e?.message || 'Failed to upload');
+      const msg = getErrorMessage(e, 'Failed to upload');
+      setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
     } finally {
       setLoading(false);
     }
@@ -81,7 +82,8 @@ export default function UploadAudio() {
       setMessage(typeof res === 'string' ? res : 'URL submitted successfully');
       setUrl('');
     } catch (e) {
-      setError(e?.message || 'Failed to submit URL');
+      const msg = getErrorMessage(e, 'Failed to submit URL');
+      setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
     } finally {
       setLoading(false);
     }

@@ -16,6 +16,38 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Centralized error normalization
+api.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const cfg = error?.config || {};
+    const res = error?.response;
+    const payload = {
+      message:
+        res?.data?.message ||
+        res?.data?.error ||
+        error?.message ||
+        'Request failed',
+      status: res?.status,
+      code: res?.data?.code || res?.data?.statusCode,
+      data: res?.data,
+      url: cfg?.url,
+      method: cfg?.method,
+    };
+    const norm = new Error(payload.message);
+    Object.assign(norm, payload);
+    return Promise.reject(norm);
+  }
+);
+
+// Small helpers for consumers (optional)
+export function getErrorMessage(e, fallback = 'Something went wrong'){
+  return e?.message || e?.data?.message || e?.data?.error || fallback;
+}
+export function isNetworkError(e){
+  return !e?.status && (e?.message?.includes('Network Error') || e?.message?.includes('timeout'));
+}
+
 export const DashboardAPI = {
   audioKPI: async (userId, params = {}) => {
     const { data } = await api.get(`/v1.3/dashboard/audio-kpi/${userId}`, { params });

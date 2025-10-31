@@ -1,9 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Link2, FileText } from 'lucide-react';
-import { AudioAPI, AudioProcessAPI } from '../lib/api';
+import { AudioAPI, AudioProcessAPI, getErrorMessage, isNetworkError } from '../lib/api';
 
 const USER_ID = 7;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function readCache(key){
+  try{
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.t || Date.now() - obj.t > CACHE_TTL_MS) return null;
+    return obj.v;
+  }catch{ return null; }
+}
+function writeCache(key, value){
+  try{ sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); }catch{}
+}
+function keyRows(userId, month, year, filters){
+  return `list:${userId}:${month}:${year}:${JSON.stringify(filters||{})}`;
+}
+function keyOpts(){ return 'list:options'; }
 
 function useQuery() {
   const { search } = useLocation();
@@ -30,7 +48,10 @@ export default function AudioAnalysisList() {
 
   async function load() {
     try {
-      setLoading(true);
+      const cacheK = keyRows(USER_ID, month, year, filters);
+      const cached = readCache(cacheK);
+      if (cached) { setRows(cached); setLoading(false); }
+      else { setLoading(true); }
       const params = {};
       if (filters.audioStatus?.length) params.audioStatus = filters.audioStatus.join(',');
       if (filters.sentiment?.length) params.sentiment = filters.sentiment.join(',');
@@ -39,8 +60,10 @@ export default function AudioAnalysisList() {
       const data = await AudioAPI.monthRecords(USER_ID, month, year, params);
       const arr = Array.isArray(data) ? data : data?.data || [];
       setRows(arr);
+      writeCache(cacheK, arr);
     } catch (e) {
-      setError(e?.message || 'Failed to load records');
+      const msg = getErrorMessage(e, 'Failed to load records');
+      setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
     } finally {
       setLoading(false);
     }
@@ -51,8 +74,12 @@ export default function AudioAnalysisList() {
   useEffect(() => {
     async function loadOptions(){
       try {
+        const k = keyOpts();
+        const cached = readCache(k);
+        if (cached) setOptions(cached);
         const res = await AudioAPI.recordFilterOptions();
         setOptions(res || {});
+        writeCache(k, res || {});
       } catch {}
     }
     loadOptions();
@@ -185,8 +212,8 @@ export default function AudioAnalysisList() {
       setNotice({ type: 'ok', text: msg });
       await load();
     } catch(e){
-      const msg = e?.response?.data?.message || e?.message || 'Failed to start processing';
-      setNotice({ type: 'err', text: msg });
+      const msg = getErrorMessage(e, 'Failed to start processing');
+      setNotice({ type: 'err', text: isNetworkError(e) ? 'Network error. Please check your connection.' : msg });
     } finally{
       setBusy((b)=>{ const x = { ...b }; delete x[audioId]; return x; });
     }
@@ -201,8 +228,8 @@ export default function AudioAnalysisList() {
       setNotice({ type: 'ok', text: msg });
       await load();
     } catch(e){
-      const msg = e?.response?.data?.message || e?.message || 'Failed to trigger re-audit';
-      setNotice({ type: 'err', text: msg });
+      const msg = getErrorMessage(e, 'Failed to trigger re-audit');
+      setNotice({ type: 'err', text: isNetworkError(e) ? 'Network error. Please check your connection.' : msg });
     } finally{
       setBusy((b)=>{ const x = { ...b }; delete x[audioId]; return x; });
     }

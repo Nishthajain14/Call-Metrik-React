@@ -1,9 +1,30 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DashboardAPI } from '../lib/api';
+import { DashboardAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const COLORS = ['#22c55e', '#ef4444', '#60a5fa'];
-const USER_ID = 1; // from requirement
+const USER_ID = 7; // from requirement
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function cacheKey(userId, year, month, view){
+  return `dashboard:${userId}:${year}:${month}:${view}`;
+}
+
+function readCache(key){
+  try{
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.t || Date.now() - obj.t > CACHE_TTL_MS) return null;
+    return obj.v;
+  }catch{ return null; }
+}
+
+function writeCache(key, value){
+  try{
+    sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value }));
+  }catch{}
+}
 
 function monthName(date = new Date()) {
   return date.toLocaleString('en-US', { month: 'long' });
@@ -36,13 +57,26 @@ export default function Dashboard() {
   const now = new Date();
   const year = now.getFullYear();
   const month = monthName(now);
-  const [view, setView] = useState('Monthly'); // Monthly | Weekly | Daily
+  const [view, setView] = useState(()=>{
+    try{ return sessionStorage.getItem('dashboard:view') || 'Monthly'; }catch{ return 'Monthly'; }
+  }); // Monthly | Weekly | Daily
 
   useEffect(() => {
     let mounted = true;
+    const key = cacheKey(USER_ID, year, month, view);
+
+    // 1) Fast-hydrate from cache if available
+    const cached = readCache(key);
+    if (cached && mounted){
+      setKpi(cached.kpi);
+      setCounts(cached.counts);
+      setSentimentMonthly(cached.sentimentMonthly);
+      setLoading(false);
+    }
+
     async function fetchAll() {
       try {
-        setLoading(true);
+        if (!cached) setLoading(true);
         const [kpiRes, countsRes, sentRes] = await Promise.all([
           DashboardAPI.audioKPI(USER_ID),
           view === 'Monthly'
@@ -56,8 +90,15 @@ export default function Dashboard() {
         setKpi(kpiRes);
         setCounts(Array.isArray(countsRes?.data) ? countsRes.data : countsRes);
         setSentimentMonthly(sentRes);
+        // persist
+        writeCache(key, {
+          kpi: kpiRes,
+          counts: Array.isArray(countsRes?.data) ? countsRes.data : countsRes,
+          sentimentMonthly: sentRes,
+        });
       } catch (e) {
-        setError(e?.message || 'Failed to load dashboard');
+        const msg = getErrorMessage(e, 'Failed to load dashboard');
+        setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
       } finally {
         setLoading(false);
       }
@@ -67,6 +108,11 @@ export default function Dashboard() {
       mounted = false;
     };
   }, [month, year, view]);
+
+  // persist current view selection
+  useEffect(()=>{
+    try{ sessionStorage.setItem('dashboard:view', view); }catch{}
+  }, [view]);
 
   const kpis = useMemo(() => {
     if (!kpi) return [];

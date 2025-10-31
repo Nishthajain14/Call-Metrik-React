@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AudioAPI } from '../lib/api';
+import { AudioAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { ChevronLeft } from 'lucide-react';
 import AudioPlayerCard from '../components/AudioDetails/AudioPlayerCard';
 import MetaDataCard from '../components/AudioDetails/MetaDataCard';
@@ -17,6 +17,12 @@ import KeywordsTable from '../components/AudioDetails/KeywordsTable';
  
 
 const USER_ID = 7;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+function readCache(key){
+  try{ const raw = sessionStorage.getItem(key); if(!raw) return null; const obj = JSON.parse(raw); if(!obj||!obj.t||Date.now()-obj.t> CACHE_TTL_MS) return null; return obj.v; }catch{ return null; }
+}
+function writeCache(key, value){ try{ sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); }catch{} }
+function detailsKey(userId, audioId){ return `details:${userId}:${audioId}`; }
 
 export default function AudioDetails() {
   const { audioId } = useParams();
@@ -55,6 +61,12 @@ export default function AudioDetails() {
     let on = true;
     async function load() {
       try {
+        const key = detailsKey(USER_ID, audioId);
+        const cached = readCache(key);
+        if (cached && on){
+          setInsights(cached.insights);
+          setAudioUrl(cached.audioUrl || '');
+        }
         const [insRaw, playerRaw] = await Promise.all([
           AudioAPI.audioInsights(USER_ID, audioId),
           AudioAPI.audioPlayerUrl(USER_ID, audioId),
@@ -200,8 +212,10 @@ export default function AudioDetails() {
         setOpenSections(init);
         const resolvedUrl = typeof playerRaw === 'string' ? playerRaw : (playerRaw?.audioUrl || playerRaw?.url || base?.audioUrl || '');
         setAudioUrl(resolvedUrl);
+        writeCache(key, { insights: norm, audioUrl: resolvedUrl });
       } catch (e) {
-        setError(e?.message || 'Failed to load details');
+        const msg = getErrorMessage(e, 'Failed to load details');
+        setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
       }
 
     }
