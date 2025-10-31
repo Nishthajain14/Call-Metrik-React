@@ -3,7 +3,7 @@ import { DashboardAPI } from '../lib/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const COLORS = ['#22c55e', '#ef4444', '#60a5fa'];
-const USER_ID = 7; // from requirement
+const USER_ID = 1; // from requirement
 
 function monthName(date = new Date()) {
   return date.toLocaleString('en-US', { month: 'long' });

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ReportsAPI } from '../lib/api';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, FunnelChart, Funnel, LabelList } from 'recharts';
 
-const USER_ID = 7;
+const USER_ID = 1;
 
 function Arrow({ up }) {
   return (

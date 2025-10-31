@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
 import { AudioAPI } from '../lib/api';
 
-const USER_ID = 7;
+const USER_ID = 1;
 
 function useQuery() {
   const { search } = useLocation();
@@ -20,7 +21,7 @@ export default function AudioAnalysisList() {
   const [options, setOptions] = useState({});
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ audioStatus: [], sentiment: [], uploadSource: [] });
-  const [pageSize, setPageSize] = useState(-1);
+  const [pageSize, setPageSize] = useState(10);
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState('createdDate');
   const [sortDir, setSortDir] = useState('desc');
@@ -176,8 +177,17 @@ export default function AudioAnalysisList() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-xl font-semibold">Audio Analysis</div>
         <div className="flex items-center gap-2">
+          <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-300"><ChevronLeft size={18} /></button>
+          <div className="text-xl font-semibold">Analysed Audio Files</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <select value={pageSize} onChange={(e)=>setPageSize(Number(e.target.value))} className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5">
+            <option value={10}>10</option>
+            <option value={50}>50</option>
+            <option value={75}>75</option>
+            <option value={-1}>All</option>
+          </select>
           <button onClick={load} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-sm">Reload</button>
           <button onClick={()=>setShowFilters(true)} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-sm">Filter</button>
           <Link to="/upload" className="bg-indigo-600 hover:bg-indigo-500 text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
@@ -185,17 +195,6 @@ export default function AudioAnalysisList() {
       </div>
 
       <div className="card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold">Analysed Audio Files</div>
-          <div className="flex items-center gap-2">
-            <select value={pageSize} onChange={(e)=>setPageSize(Number(e.target.value))} className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5">
-              <option value={-1}>All</option>
-              <option value={10}>10</option>
-              <option value={50}>50</option>
-              <option value={75}>75</option>
-            </select>
-          </div>
-        </div>
         {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

@@ -6,6 +6,7 @@ import Reports from './pages/Reports';
 import AudioAnalysisMonthly from './pages/AudioAnalysisMonthly';
 import AudioAnalysisList from './pages/AudioAnalysisList';
 import AudioDetails from './pages/AudioDetails';
+import UploadAudio from './pages/UploadAudio';
 import './index.css';
 
 function AppLayout({ children, title }) {
@@ -41,7 +42,10 @@ export default function App() {
           path="/audio-details/:audioId"
           element={<AppLayout title="Audio Details"><AudioDetails /></AppLayout>}
         />
-        <Route path="/upload" element={<AppLayout title="Upload Audio">Upload coming soon</AppLayout>} />
+        <Route
+          path="/upload"
+          element={<AppLayout title="Upload Audio"><UploadAudio /></AppLayout>}
+        />
         <Route
           path="/reports"
           element={<AppLayout title="Reports"><Reports /></AppLayout>}

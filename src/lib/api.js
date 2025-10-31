@@ -47,6 +47,28 @@ export const DashboardAPI = {
   },
 };
 
+// Upload endpoints
+export const AudioUploadAPI = {
+  // files: FileList | File[] | Blob[]
+  uploadFile: async (userId, files) => {
+    const form = new FormData();
+    const list = Array.from(files || []);
+    // backend expects multiple "files" entries
+    list.forEach((f) => form.append('files', f));
+    const { data } = await api.post(`/v1.3/audio_upload/upload-audio-file/${userId}`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return data;
+  },
+  // urls: string | string[]
+  uploadUrl: async (userId, urls) => {
+    const body = { urls: Array.isArray(urls) ? (urls[0] || '') : (urls || '') };
+    const { data } = await api.post(`/v1.3/audio_upload/upload-audio-url/${userId}`, body);
+    return data;
+  },
+};
+
 export const AudioAPI = {
   monthlySummary: async (userId, year, params = {}) => {
     const { data } = await api.get(`/v1.3/monthlyData/getMonthWiseData/${userId}/${year}/`, { params });

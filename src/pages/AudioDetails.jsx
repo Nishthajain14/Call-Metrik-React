@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AudioAPI } from '../lib/api';
+import { ChevronLeft } from 'lucide-react';
 import AudioPlayerCard from '../components/AudioDetails/AudioPlayerCard';
 import MetaDataCard from '../components/AudioDetails/MetaDataCard';
 import TabsNav from '../components/AudioDetails/TabsNav';
@@ -15,7 +16,7 @@ import KeywordsTable from '../components/AudioDetails/KeywordsTable';
 
  
 
-const USER_ID = 7;
+const USER_ID = 1;
 
 export default function AudioDetails() {
   const { audioId } = useParams();
@@ -216,8 +217,10 @@ export default function AudioDetails() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="text-xl font-semibold">Call Details</div>
-        <button onClick={()=>navigate(-1)} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-sm">Back</button>
+        <div className="flex items-center gap-2">
+          <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-300"><ChevronLeft size={18} /></button>
+          <div className="text-xl font-semibold">Call Details</div>
+        </div>
       </div>
 
       {/* Title + Player */}
