@@ -57,9 +57,10 @@ export default function Dashboard() {
   const now = new Date();
   const year = now.getFullYear();
   const month = monthName(now);
-  const [view, setView] = useState(()=>{
+  const [viewRaw, setViewRaw] = useState(()=>{
     try{ return sessionStorage.getItem('dashboard:view') || 'Monthly'; }catch{ return 'Monthly'; }
-  }); // Monthly | Weekly | Daily
+  });
+  const [view, setView] = useState(viewRaw);
 
   useEffect(() => {
     let mounted = true;
@@ -109,7 +110,11 @@ export default function Dashboard() {
     };
   }, [month, year, view]);
 
-  // persist current view selection
+  useEffect(()=>{
+    const t = setTimeout(()=> setView(viewRaw), 300);
+    return ()=> clearTimeout(t);
+  }, [viewRaw]);
+
   useEffect(()=>{
     try{ sessionStorage.setItem('dashboard:view', view); }catch{}
   }, [view]);
@@ -186,8 +191,8 @@ export default function Dashboard() {
           <div className="font-semibold">Datewise Counts</div>
           <div>
             <select
-              value={view}
-              onChange={(e) => setView(e.target.value)}
+              value={viewRaw}
+              onChange={(e) => setViewRaw(e.target.value)}
               className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5"
             >
               <option>Monthly</option>
@@ -274,7 +279,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {loading && <div className="text-sm muted">Loading latest data...</div>}
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-600 border-t-white" />
+        </div>
+      )}
     </div>
   );
 }
