@@ -39,7 +39,7 @@ function number(x) {
 function Info({ text }) {
   return (
     <span
-      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-neutral-700 text-[10px] text-neutral-300 hover:text-white"
+      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] border-neutral-300 text-neutral-600 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:text-white"
       title={text}
     >
       i
@@ -213,7 +213,7 @@ export default function Dashboard() {
             <select
               value={viewRaw}
               onChange={(e) => setViewRaw(e.target.value)}
-              className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5"
+              className="input rounded-md"
             >
               <option>Monthly</option>
               <option>Weekly</option>
@@ -224,10 +224,10 @@ export default function Dashboard() {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={datewise} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
-              <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fill: '#a3a3a3', fontSize: 12 }} />
-              <YAxis tick={{ fill: '#a3a3a3', fontSize: 12 }} />
-              <Tooltip contentStyle={{ background: '#09090b', border: '1px solid #27272a' }} />
+              <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+              <XAxis dataKey="date" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
+              <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
+              <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} />
               <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
@@ -243,10 +243,10 @@ export default function Dashboard() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={sentMonthlySeries}>
-                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fill: '#a3a3a3', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#a3a3a3', fontSize: 12 }} domain={[0, 100]} />
-                <Tooltip contentStyle={{ background: '#09090b', border: '1px solid #27272a' }} />
+                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} domain={[0, 100]} />
+                <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} />
                 <Legend />
                 <Line type="monotone" dataKey="positive" stroke="#22c55e" dot={false} />
                 <Line type="monotone" dataKey="negative" stroke="#ef4444" dot={false} />
@@ -279,7 +279,7 @@ export default function Dashboard() {
         <div className="font-semibold mb-3">Top Mentioned Keywords</div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-neutral-300">
+            <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Name</th>
                 <th className="py-2 pr-4">Weightage (%)</th>
@@ -289,7 +289,7 @@ export default function Dashboard() {
             <tbody>
               {Array.isArray(keywords) && keywords.length > 0 ? (
                 keywords.map((k, i) => (
-                  <tr key={i} className="border-t border-neutral-800">
+                  <tr key={i} className="border-t border-neutral-200 dark:border-neutral-800">
                     <td className="py-2 pr-4">{k.name}</td>
                     <td className="py-2 pr-4">{number(k.avgTranscriptWeightage)}</td>
                     <td className="py-2 pr-4">{number(k.avgTranscriptPercentage)}</td>
@@ -297,7 +297,7 @@ export default function Dashboard() {
                 ))
               ) : (
                 <tr>
-                  <td className="py-3 text-neutral-400" colSpan={3}>No keywords available</td>
+                  <td className="py-3 text-neutral-500 dark:text-neutral-400" colSpan={3}>No keywords available</td>
                 </tr>
               )}
             </tbody>
@@ -307,7 +307,7 @@ export default function Dashboard() {
 
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-600 border-t-white" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-300 border-t-neutral-700 dark:border-neutral-600 dark:border-t-white" />
         </div>
       )}
     </div>

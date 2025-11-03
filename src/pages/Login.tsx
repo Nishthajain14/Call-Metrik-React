@@ -26,33 +26,33 @@ export default function Login(){
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-100 p-4">
-      <div className="w-full max-w-sm card p-6 border border-neutral-800 rounded-xl bg-neutral-900">
+    <div className="min-h-screen flex items-center justify-center bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100 p-4">
+      <div className="w-full max-w-sm card p-6">
         <div className="text-center mb-4">
           <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600" />
           <div className="text-xl font-semibold">Welcome Back</div>
-          <div className="text-sm text-neutral-400">Please enter login credentials.</div>
+          <div className="text-sm text-neutral-600 dark:text-neutral-400">Please enter login credentials.</div>
         </div>
-        {error && <div className="mb-3 text-sm text-red-400 border border-red-700 rounded p-2">{error}</div>}
+        {error && <div className="mb-3 text-sm rounded p-2 border text-red-700 border-red-300 bg-red-50 dark:text-red-400 dark:border-red-700 dark:bg-red-950/40">{error}</div>}
         <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <label className="text-sm text-neutral-300">Email</label>
+            <label className="text-sm text-neutral-700 dark:text-neutral-300">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e)=>setEmail(e.target.value)}
-              className="mt-1 w-full bg-neutral-950 border border-neutral-700 rounded px-3 py-2 outline-none focus:border-neutral-500"
+              className="mt-1 w-full input"
               placeholder="Email address"
               required
             />
           </div>
           <div>
-            <label className="text-sm text-neutral-300">Password</label>
+            <label className="text-sm text-neutral-700 dark:text-neutral-300">Password</label>
             <input
               type="password"
               value={password}
               onChange={(e)=>setPassword(e.target.value)}
-              className="mt-1 w-full bg-neutral-950 border border-neutral-700 rounded px-3 py-2 outline-none focus:border-neutral-500"
+              className="mt-1 w-full input"
               placeholder="Password"
               required
             />
@@ -60,7 +60,7 @@ export default function Login(){
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed rounded-md py-2 font-medium"
+            className="w-full btn-primary disabled:opacity-60 disabled:cursor-not-allowed rounded-md py-2 font-medium"
           >{submitting ? 'Logging in...' : 'Log in'}</button>
         </form>
       </div>

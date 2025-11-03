@@ -19,7 +19,7 @@ function Arrow({ up }) {
 function Info({ text }){
   return (
     <span
-      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-neutral-700 text-[10px] text-neutral-300 hover:text-white"
+      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] border-neutral-300 text-neutral-600 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:text-white"
       title={text}
     >
       i
@@ -53,7 +53,7 @@ function LegendItem({ color, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2 text-sm ${active ? 'text-neutral-200' : 'text-neutral-500 line-through'} hover:opacity-90`}
+      className={`flex items-center gap-2 text-sm ${active ? 'text-neutral-900 dark:text-neutral-200' : 'text-neutral-500 line-through'} hover:opacity-90`}
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill={color} xmlns="http://www.w3.org/2000/svg">
         <path d="M12 18L3 6h18L12 18z" />
@@ -183,7 +183,7 @@ export default function Reports() {
           <select
             value={callStatus}
             onChange={(e) => setCallStatus(e.target.value)}
-            className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5"
+            className="input rounded-md"
           >
             <option value="both">Both</option>
             <option value="Fresh Call">Fresh Call</option>
@@ -192,7 +192,7 @@ export default function Reports() {
         </div>
 
       </div>
-      {error && <div className="border border-red-600 text-red-400 p-3 rounded-lg">{error}</div>}
+      {error && <div className="border border-red-600 text-red-700 dark:text-red-400 p-3 rounded-lg">{error}</div>}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -209,10 +209,10 @@ export default function Reports() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={callDistData}>
-                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                <XAxis dataKey="range" tick={{ fill: '#a3a3a3', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#a3a3a3', fontSize: 12 }} />
-                <Tooltip contentStyle={{ background: 'transparent', border: 'none' }} cursor={{ fill: 'transparent' }} />
+                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+                <XAxis dataKey="range" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
+                <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -223,10 +223,10 @@ export default function Reports() {
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={peakHoursData}>
-                <CartesianGrid stroke="#27272a" strokeDasharray="3 3" />
-                <XAxis dataKey="range" tick={{ fill: '#a3a3a3', fontSize: 12 }} />
-                <YAxis tick={{ fill: '#a3a3a3', fontSize: 12 }} />
-                <Tooltip contentStyle={{ background: 'transparent', border: 'none' }} cursor={{ fill: 'transparent' }} />
+                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+                <XAxis dataKey="range" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
+                <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
+                <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="count" fill="#7c3aed" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -255,13 +255,13 @@ export default function Reports() {
                     <stop offset="100%" stopColor="#22c55e" />
                   </linearGradient>
                 </defs>
-                <Tooltip formatter={(v, n, p) => [p?.payload?.count ?? v, `${p?.payload?.stage ?? ''}`]} contentStyle={{ background: 'transparent', border: 'none' }} cursor={{ fill: 'transparent' }} />
+                <Tooltip formatter={(v, n, p) => [p?.payload?.count ?? v, `${p?.payload?.stage ?? ''}`]} contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ fill: 'transparent' }} />
                 <Funnel
                   dataKey="viz"
                   data={filteredFunnel.map((d) => ({ ...d, fill: d.color }))}
                   isAnimationActive={false}
                 >
-                  <LabelList position="center" dataKey="count" fill="#e5e7eb" />
+                  <LabelList position="center" dataKey="count" fill="var(--chart-tick)" />
                 </Funnel>
               </FunnelChart>
             </ResponsiveContainer>
@@ -292,7 +292,7 @@ export default function Reports() {
           <div className="font-semibold mb-3">Eventwise Agent Performance</div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="text-left text-neutral-300">
+              <thead className="text-left text-neutral-600 dark:text-neutral-300">
                 <tr>
                   <th className="py-2 pr-4">Event</th>
                   <th className="py-2 pr-4">Agents Followed(%)</th>
@@ -301,14 +301,14 @@ export default function Reports() {
               <tbody>
                 {Array.isArray(events) && events.length ? (
                   events.map((e, i) => (
-                    <tr key={i} className="border-t border-neutral-800">
+                    <tr key={i} className="border-t border-neutral-200 dark:border-neutral-800">
                       <td className="py-2 pr-4">{e.Event}</td>
                       <td className="py-2 pr-4">{e.AgentsFollowedRate}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="py-3 text-neutral-400" colSpan={2}>No data</td>
+                    <td className="py-3 text-neutral-500 dark:text-neutral-400" colSpan={2}>No data</td>
                   </tr>
                 )}
               </tbody>
@@ -322,7 +322,7 @@ export default function Reports() {
         <div className="font-semibold mb-3">Agent Script Adherence</div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-neutral-300">
+            <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Agent</th>
                 <th className="py-2 pr-4">Number of Calls</th>
@@ -339,7 +339,7 @@ export default function Reports() {
                 adherence.map((r, i) => {
                   const map = Object.fromEntries((r.scriptStats || []).map(s => [s.event, s.averagePercent]));
                   return (
-                    <tr key={i} className="border-t border-neutral-800">
+                    <tr key={i} className="border-t border-neutral-200 dark:border-neutral-800">
                       <td className="py-2 pr-4">{r.agent}</td>
                       <td className="py-2 pr-4">{r.nCalls}</td>
                       <td className="py-2 pr-4">{r.avgFullScriptPercent?.toFixed?.(2)}</td>
@@ -353,7 +353,7 @@ export default function Reports() {
                 })
               ) : (
                 <tr>
-                  <td className="py-3 text-neutral-400" colSpan={8}>No data</td>
+                  <td className="py-3 text-neutral-500 dark:text-neutral-400" colSpan={8}>No data</td>
                 </tr>
               )}
             </tbody>
@@ -366,11 +366,11 @@ export default function Reports() {
         <div className="flex items-center justify-between mb-3">
           <div className="font-semibold">Agent Performance Timeline</div>
           <div className="flex items-center gap-2">
-            <select value={scoreType} onChange={(e) => setScoreType(e.target.value)} className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5">
+            <select value={scoreType} onChange={(e) => setScoreType(e.target.value)} className="input rounded-md">
               <option>OFE Score</option>
               <option>Weighted Score</option>
             </select>
-            <select value={month} onChange={(e) => setMonth(e.target.value)} className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5">
+            <select value={month} onChange={(e) => setMonth(e.target.value)} className="input rounded-md">
               {months.map((m) => (
                 <option key={m}>{m}</option>
               ))}
@@ -386,14 +386,14 @@ export default function Reports() {
               >
                 {/* Sticky corner blank cell */}
                 <div
-                  className="sticky top-0 left-0 z-20 bg-neutral-900/60 backdrop-blur supports-[backdrop-filter]:bg-neutral-900/40"
+                  className="sticky top-0 left-0 z-20 bg-white/60 backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:bg-neutral-900/60 dark:supports-[backdrop-filter]:bg-neutral-900/40"
                   style={{ height: 28 }}
                 />
                 {/* Sticky date headers */}
                 {timeline.dates.map((d) => (
                   <div
                     key={d}
-                    className="sticky top-0 z-10 text-[10px] text-neutral-300 text-center py-1 bg-neutral-900/60 backdrop-blur supports-[backdrop-filter]:bg-neutral-900/40"
+                    className="sticky top-0 z-10 text-[10px] text-neutral-600 text-center py-1 bg-white/60 backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:text-neutral-300 dark:bg-neutral-900/60 dark:supports-[backdrop-filter]:bg-neutral-900/40"
                   >
                     {new Date(d).getDate().toString().padStart(2, '0')}
                   </div>
@@ -403,7 +403,7 @@ export default function Reports() {
                   <>
                     <div
                       key={`${u}-label`}
-                      className="sticky left-0 z-10 text-xs text-neutral-200 py-1 pr-3 bg-neutral-900/60 backdrop-blur supports-[backdrop-filter]:bg-neutral-900/40"
+                      className="sticky left-0 z-10 text-xs text-neutral-900 py-1 pr-3 bg-white/60 backdrop-blur supports-[backdrop-filter]:bg-white/40 dark:text-neutral-200 dark:bg-neutral-900/60 dark:supports-[backdrop-filter]:bg-neutral-900/40"
                       style={{ alignSelf: 'stretch', display: 'flex', alignItems: 'center' }}
                     >
                       {u}
@@ -415,7 +415,7 @@ export default function Reports() {
                       const r = Math.round(40 + 140 * t);
                       const g = Math.round(80 + 120 * t);
                       const b = Math.round(160 - 120 * t);
-                      const bg = v ? `rgb(${r}, ${g}, ${b})` : 'rgba(17,24,39,1)';
+                      const bg = v ? `rgb(${r}, ${g}, ${b})` : 'var(--chart-grid)';
                       return (
                         <div
                           key={`${u}-${ci}`}
@@ -433,11 +433,11 @@ export default function Reports() {
             </div>
             {/* Legend */}
             <div className="mt-3 flex items-center gap-3 justify-end">
-              <span className="text-xs text-neutral-400">Low</span>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">Low</span>
               <div className="h-2 w-40 rounded-full" style={{
                 background: 'linear-gradient(90deg, rgb(40,80,160) 0%, rgb(180,160,60) 50%, rgb(180,220,80) 100%)'
               }} />
-              <span className="text-xs text-neutral-400">High</span>
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">High</span>
             </div>
           </div>
         ) : (
@@ -452,7 +452,7 @@ export default function Reports() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-neutral-300">
+            <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Agent</th>
                 <th className="py-2 pr-4">Number of Calls</th>
@@ -469,7 +469,7 @@ export default function Reports() {
             <tbody>
               {Array.isArray(agentReport) && agentReport.length ? (
                 agentReport.map((r, i) => (
-                  <tr key={i} className="border-t border-neutral-800">
+                  <tr key={i} className="border-t border-neutral-200 dark:border-neutral-800">
                     <td className="py-2 pr-4">{r.userName}</td>
                     <td className="py-2 pr-4">{r.ncalls}</td>
                     <td className="py-2 pr-4">{r.avgFileDurationSeconds?.toFixed?.(2)}</td>
@@ -484,7 +484,7 @@ export default function Reports() {
                 ))
               ) : (
                 <tr>
-                  <td className="py-3 text-neutral-400" colSpan={10}>No data</td>
+                  <td className="py-3 text-neutral-500 dark:text-neutral-400" colSpan={10}>No data</td>
                 </tr>
               )}
             </tbody>

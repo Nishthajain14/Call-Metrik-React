@@ -2,13 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme by default; easy to theme-switch later */
-html {
-  color-scheme: dark;
+:root {
+  --sidebar-width: 16rem;
+  /* Chart color variables (light) */
+  --chart-grid: #e5e7eb; /* neutral-200 */
+  --chart-tick: #525252; /* neutral-600 */
+  --chart-tooltip-bg: #ffffff;
+  --chart-tooltip-border: #e5e7eb; /* neutral-200 */
+}
+
+@media (max-width: 767px) {
+  :root {
+    --sidebar-width: 0px;
+  }
 }
 
 body {
-  @apply bg-neutral-950 text-neutral-100 antialiased;
+  @apply antialiased;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -22,10 +32,17 @@ code {
     monospace;
 }
 
-.card {
-  @apply rounded-xl bg-neutral-900 border border-neutral-800 shadow-card;
+.dark {
+  /* Chart color variables (dark) */
+  --chart-grid: #27272a; /* neutral-800 */
+  --chart-tick: #a3a3a3; /* neutral-400 */
+  --chart-tooltip-bg: #09090b; /* neutral-950 */
+  --chart-tooltip-border: #27272a; /* neutral-800 */
 }
 
-.muted {
-  @apply text-neutral-400;
+@layer components {
+  .card { @apply rounded-xl bg-white border border-neutral-200 shadow-card dark:bg-neutral-900 dark:border-neutral-800; }
+  .muted { @apply text-neutral-600 dark:text-neutral-400; }
+  .input { @apply bg-white border border-neutral-300 text-neutral-900 rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-brand-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-200; }
+  .btn-primary { @apply bg-brand-600 text-white hover:bg-brand-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 dark:bg-brand-600 dark:hover:bg-brand-500; }
 }

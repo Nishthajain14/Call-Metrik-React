@@ -9,15 +9,16 @@ import AudioDetails from './pages/AudioDetails';
 import UploadAudio from './pages/UploadAudio';
 import Login from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import './index.css';
 
 function AppLayout({ children, title }) {
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
+    <div className="min-h-screen bg-white text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100">
       <Sidebar />
       <Navbar title={title} />
       {/* content container offset by fixed sidebar (md) and navbar */}
-      <div className="pt-16 md:ml-64">
+      <div className="pt-16" style={{ marginLeft: 'var(--sidebar-width)' }}>
         <main className="min-h-[calc(100vh-4rem)] p-4 md:p-6 space-y-6 overflow-y-auto">{children}</main>
       </div>
     </div>
@@ -28,8 +29,8 @@ export default function App() {
   function RequireAuth({ children, title }){
     const { isLoading, session } = useAuth();
     if (isLoading) return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-200">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-600 border-t-white" />
+      <div className="min-h-screen flex items-center justify-center bg-white text-neutral-600 dark:bg-neutral-950 dark:text-neutral-200">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-300 border-t-neutral-700 dark:border-neutral-600 dark:border-t-white" />
       </div>
     );
     if (!session) return <Navigate to="/login" replace />;
@@ -37,18 +38,20 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<RequireAuth title="Dashboard"><Dashboard /></RequireAuth>} />
-          <Route path="/audio-analysis" element={<RequireAuth title="Audio Analysis"><AudioAnalysisMonthly /></RequireAuth>} />
-          <Route path="/audio-analysis/:month" element={<RequireAuth title="Audio Analysis"><AudioAnalysisList /></RequireAuth>} />
-          <Route path="/audio-details/:audioId" element={<RequireAuth title="Audio Details"><AudioDetails /></RequireAuth>} />
-          <Route path="/upload" element={<RequireAuth title="Upload Audio"><UploadAudio /></RequireAuth>} />
-          <Route path="/reports" element={<RequireAuth title="Reports"><Reports /></RequireAuth>} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<RequireAuth title="Dashboard"><Dashboard /></RequireAuth>} />
+            <Route path="/audio-analysis" element={<RequireAuth title="Audio Analysis"><AudioAnalysisMonthly /></RequireAuth>} />
+            <Route path="/audio-analysis/:month" element={<RequireAuth title="Audio Analysis"><AudioAnalysisList /></RequireAuth>} />
+            <Route path="/audio-details/:audioId" element={<RequireAuth title="Audio Details"><AudioDetails /></RequireAuth>} />
+            <Route path="/upload" element={<RequireAuth title="Upload Audio"><UploadAudio /></RequireAuth>} />
+            <Route path="/reports" element={<RequireAuth title="Reports"><Reports /></RequireAuth>} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

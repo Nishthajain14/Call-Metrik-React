@@ -241,22 +241,22 @@ export default function AudioAnalysisList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-300"><ChevronLeft size={18} /></button>
+          <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-200 text-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-300"><ChevronLeft size={18} /></button>
           <div className="text-xl font-semibold">Analysed Audio Files</div>
         </div>
       {notice.text && (
         <div className={`text-sm px-3 py-2 rounded-md border ${notice.type==='err' ? 'bg-rose-950/40 text-rose-300 border-rose-800':'bg-emerald-950/40 text-emerald-300 border-emerald-800'}`}>{notice.text}</div>
       )}
         <div className="flex items-center gap-2">
-          <select value={pageSize} onChange={(e)=>setPageSize(Number(e.target.value))} className="bg-neutral-900 border border-neutral-700 text-sm rounded-md px-3 py-1.5">
+          <select value={pageSize} onChange={(e)=>setPageSize(Number(e.target.value))} className="input rounded-md">
             <option value={10}>10</option>
             <option value={50}>50</option>
             <option value={75}>75</option>
             <option value={-1}>All</option>
           </select>
-          <button onClick={load} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-sm">Reload</button>
-          <button onClick={()=>setShowFilters(true)} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 text-sm">Filter</button>
-          <Link to="/upload" className="bg-indigo-600 hover:bg-indigo-500 text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
+          <button onClick={load} className="rounded-md px-2 py-1 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Reload</button>
+          <button onClick={()=>setShowFilters(true)} className="rounded-md px-2 py-1 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Filter</button>
+          <Link to="/upload" className="btn-primary text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
         </div>
       </div>
 
@@ -264,7 +264,7 @@ export default function AudioAnalysisList() {
         {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-left text-neutral-300">
+            <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">SL No</th>
                 <th className="py-2 pr-4 cursor-pointer select-none" onClick={()=>handleSort('fileName')}>File Name {sortKey==='fileName' ? (sortDir==='asc' ? '▲':'▼') : '↕'}</th>
@@ -296,17 +296,17 @@ export default function AudioAnalysisList() {
                   const status = hasCall ? (r.Call ?? r.call ?? '') : (r.audiostatus || r.audioStatus || r.status || '');
                   const sentimentUi = (()=>{
                     const s = String(sent).toLowerCase();
-                    if (s.includes('positive')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600/20 text-emerald-300">🙂<span className="hidden sm:inline">Positive</span></span>;
-                    if (s.includes('negative')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-600/20 text-rose-300">🙁<span className="hidden sm:inline">Negative</span></span>;
-                    if (s.includes('neutral')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-600/20 text-slate-300">😐<span className="hidden sm:inline">Neutral</span></span>;
-                    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600/20 text-amber-300">?<span className="hidden sm:inline">Unknown</span></span>;
+                    if (s.includes('positive')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300">🙂<span className="hidden sm:inline">Positive</span></span>;
+                    if (s.includes('negative')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-600/20 dark:text-rose-300">🙁<span className="hidden sm:inline">Negative</span></span>;
+                    if (s.includes('neutral')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-600/20 dark:text-slate-300">😐<span className="hidden sm:inline">Neutral</span></span>;
+                    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-600/20 dark:text-amber-300">?<span className="hidden sm:inline">Unknown</span></span>;
                   })();
                   const statusUi = (()=>{
                     const s = String(status).toLowerCase();
-                    if (!hasCall && s.includes('processed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-cyan-600/70 text-black">Processed</span>;
-                    if (s.includes('insufficient')) return <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500/80 text-black">Insufficient Audio Duration</span>;
-                    if (s.includes('failed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-rose-500/80 text-black">Failed</span>;
-                    if (s) return <span className="inline-block px-2 py-0.5 rounded-md bg-indigo-500/30 text-indigo-200 capitalize">{s}</span>;
+                    if (!hasCall && s.includes('processed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-cyan-600 text-black dark:bg-cyan-600/70">Processed</span>;
+                    if (s.includes('insufficient')) return <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500 text-black dark:bg-amber-500/80">Insufficient Audio Duration</span>;
+                    if (s.includes('failed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-rose-500 text-black dark:bg-rose-500/80">Failed</span>;
+                    if (s) return <span className="inline-block px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 capitalize dark:bg-indigo-500/30 dark:text-indigo-200">{s}</span>;
                     return <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-700 text-neutral-200">-</span>;
                   })();
                   return (
@@ -320,7 +320,7 @@ export default function AudioAnalysisList() {
                           if (!src) return '•';
                           const isUrl = src.includes('url');
                           const isDoc = src.includes('doc') || src.includes('file');
-                          return isUrl ? <span className="inline-flex items-center gap-1 text-neutral-300"><Link2 size={14}/> URL</span> : isDoc ? <span className="inline-flex items-center gap-1 text-neutral-300"><FileText size={14}/> Document</span> : <span className="inline-flex items-center gap-1 text-neutral-300"><FileText size={14}/> {r.uploadSource}</span>;
+                          return isUrl ? <span className="inline-flex items-center gap-1 text-neutral-600 dark:text-neutral-300"><Link2 size={14}/> URL</span> : isDoc ? <span className="inline-flex items-center gap-1 text-neutral-600 dark:text-neutral-300"><FileText size={14}/> Document</span> : <span className="inline-flex items-center gap-1 text-neutral-600 dark:text-neutral-300"><FileText size={14}/> {r.uploadSource}</span>;
                         })()}
                       </td>
                       <td className="py-2 pr-4">{execName}</td>
@@ -332,12 +332,12 @@ export default function AudioAnalysisList() {
                       <td className="py-2 pr-4">
                         {(()=>{
                           const s = String(status).toLowerCase();
-                          if (s === 'process' || s === 'processed') return <span className="text-emerald-300">Done</span>;
+                          if (s === 'process' || s === 'processed') return <span className="text-emerald-700 dark:text-emerald-300">Done</span>;
                           if (s === 'uploaded') return (
                             <button
                               onClick={(e)=>{ e.stopPropagation(); handleProcess(audioId); }}
                               disabled={!!busy[audioId]}
-                              className="bg-indigo-600 hover:bg-indigo-500 rounded-md px-2 py-1 text-xs disabled:opacity-60"
+                              className="btn-primary rounded-md px-2 py-1 text-xs disabled:opacity-60"
                             >
                               {busy[audioId] ? '...' : 'Process'}
                             </button>
@@ -346,12 +346,12 @@ export default function AudioAnalysisList() {
                             <button
                               onClick={(e)=>{ e.stopPropagation(); handleReAudit(audioId); }}
                               disabled={!!busy[audioId]}
-                              className="bg-violet-600 hover:bg-violet-500 rounded-md px-2 py-1 text-xs disabled:opacity-60"
+                              className="btn-primary rounded-md px-2 py-1 text-xs disabled:opacity-60"
                             >
                               {busy[audioId] ? '...' : 'Re-Audit'}
                             </button>
                           );
-                          if (s === 'processing') return <span className="text-amber-300">In-Progress</span>;
+                          if (s === 'processing') return <span className="text-amber-700 dark:text-amber-300">In-Progress</span>;
                           if (s.includes('insufficient')) return <span>-</span>;
                           return <span>-</span>;
                         })()}
@@ -360,27 +360,27 @@ export default function AudioAnalysisList() {
                   );
                 })
               ) : (
-                <tr><td className="py-3 text-neutral-400" colSpan={11}>{(filters.audioStatus?.length || filters.sentiment?.length || filters.uploadSource?.length) ? 'No results found' : 'No records'}</td></tr>
-              )}
+                <tr><td className="py-3 text-neutral-500 dark:text-neutral-400" colSpan={11}>{(filters.audioStatus?.length || filters.sentiment?.length || filters.uploadSource?.length) ? 'No results found' : 'No records'}</td></tr>
+            )}
             </tbody>
           </table>
         </div>
         {pageSize !== -1 && (
           <div className="flex items-center justify-end gap-2 mt-3 text-sm">
             <span className="muted">{(page-1)*pageSize+1} - {Math.min(page*pageSize, filtered.length)} of {filtered.length}</span>
-            <button disabled={page<=1} onClick={()=>setPage((p)=>Math.max(1,p-1))} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 disabled:opacity-50">Prev</button>
-            <button disabled={page>=totalPages} onClick={()=>setPage((p)=>Math.min(totalPages,p+1))} className="bg-neutral-800 border border-neutral-700 rounded-md px-2 py-1 disabled:opacity-50">Next</button>
+            <button disabled={page<=1} onClick={()=>setPage((p)=>Math.max(1,p-1))} className="rounded-md px-2 py-1 border border-neutral-300 disabled:opacity-50 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Prev</button>
+            <button disabled={page>=totalPages} onClick={()=>setPage((p)=>Math.min(totalPages,p+1))} className="rounded-md px-2 py-1 border border-neutral-300 disabled:opacity-50 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Next</button>
           </div>
         )}
       </div>
 
       {showFilters && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl bg-neutral-900 border border-neutral-800 rounded-xl p-4">
+          <div className="w-full max-w-2xl bg-white border border-neutral-200 rounded-xl p-4 dark:bg-neutral-900 dark:border-neutral-800">
             <div className="text-lg font-semibold mb-4">Filter Options</div>
             <div className="space-y-4">
               <div>
-                <div className="text-sm text-neutral-300 mb-2">Audio Status</div>
+                <div className="text-sm text-neutral-700 dark:text-neutral-300 mb-2">Audio Status</div>
                 <div className="flex flex-wrap gap-2">
                   {(options.audioStatus || []).map((o) => {
                     const active = filters.audioStatus.includes(o.value || o.label || o);
@@ -392,13 +392,13 @@ export default function AudioAnalysisList() {
                           if (s.has(val)) s.delete(val); else s.add(val);
                           return { ...f, audioStatus: Array.from(s) };
                         });
-                      }} className={`px-3 py-1.5 rounded-full text-xs border ${active? 'bg-indigo-600 border-indigo-500':'bg-neutral-800 border-neutral-700'}`}>{o.label || o.value || o}</button>
+                      }} className={`px-3 py-1.5 rounded-full text-xs border ${active? 'bg-indigo-600 border-indigo-500 text-white':'bg-neutral-100 border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300'}`}>{o.label || o.value || o}</button>
                     );
                   })}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-neutral-300 mb-2">Sentiment</div>
+                <div className="text-sm text-neutral-700 dark:text-neutral-300 mb-2">Sentiment</div>
                 <div className="flex flex-wrap gap-2">
                   {(options.sentiment || []).map((o) => {
                     const active = filters.sentiment.includes(o.value || o.label || o);
@@ -410,13 +410,13 @@ export default function AudioAnalysisList() {
                           if (s.has(val)) s.delete(val); else s.add(val);
                           return { ...f, sentiment: Array.from(s) };
                         });
-                      }} className={`px-3 py-1.5 rounded-full text-xs border ${active? 'bg-indigo-600 border-indigo-500':'bg-neutral-800 border-neutral-700'}`}>{o.label || o.value || o}</button>
+                      }} className={`px-3 py-1.5 rounded-full text-xs border ${active? 'bg-indigo-600 border-indigo-500 text-white':'bg-neutral-100 border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300'}`}>{o.label || o.value || o}</button>
                     );
                   })}
                 </div>
               </div>
               <div>
-                <div className="text-sm text-neutral-300 mb-2">Upload Source</div>
+                <div className="text-sm text-neutral-700 dark:text-neutral-300 mb-2">Upload Source</div>
                 <div className="flex flex-wrap gap-2">
                   {(options.uploadSource || []).map((o) => {
                     const active = filters.uploadSource.includes(o.value || o.label || o);
@@ -428,17 +428,17 @@ export default function AudioAnalysisList() {
                           if (s.has(val)) s.delete(val); else s.add(val);
                           return { ...f, uploadSource: Array.from(s) };
                         });
-                      }} className={`px-3 py-1.5 rounded-full text-xs border ${active? 'bg-indigo-600 border-indigo-500':'bg-neutral-800 border-neutral-700'}`}>{o.label || o.value || o}</button>
-                    );
+                      }} className={`px-3 py-1.5 rounded-full text-xs border ${active? 'bg-indigo-600 border-indigo-500 text-white':'bg-neutral-100 border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300'}`}>{o.label || o.value || o}</button>
+                  );
                   })}
                 </div>
               </div>
             </div>
             <div className="mt-6 flex items-center justify-between">
-              <button onClick={()=>{ setFilters({ audioStatus: [], sentiment: [], uploadSource: [] }); }} className="bg-neutral-800 border border-neutral-700 rounded-md px-3 py-1.5 text-sm">Reset Filters</button>
+              <button onClick={()=>{ setFilters({ audioStatus: [], sentiment: [], uploadSource: [] }); }} className="rounded-md px-3 py-1.5 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Reset Filters</button>
               <div className="flex items-center gap-2">
-                <button onClick={()=>setShowFilters(false)} className="bg-neutral-800 border border-neutral-700 rounded-md px-3 py-1.5 text-sm">Close</button>
-                <button onClick={()=>{ setShowFilters(false); load(); }} className="bg-indigo-600 hover:bg-indigo-500 rounded-md px-3 py-1.5 text-sm">Apply Filters</button>
+                <button onClick={()=>setShowFilters(false)} className="rounded-md px-3 py-1.5 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Close</button>
+                <button onClick={()=>{ setShowFilters(false); load(); }} className="btn-primary rounded-md px-3 py-1.5 text-sm">Apply Filters</button>
               </div>
             </div>
           </div>

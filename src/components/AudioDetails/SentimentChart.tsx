@@ -98,7 +98,7 @@ export default function SentimentChart({ timeline, summary, series }) {
 
   return (
     <div className="overflow-x-auto relative" ref={wrapRef}>
-      <div className="flex items-center gap-4 text-xs text-neutral-300 mb-2">
+      <div className="flex items-center gap-4 text-xs text-neutral-600 dark:text-neutral-300 mb-2">
         <span className="inline-flex items-center gap-1"><span>📈</span> Sentiment timeline</span>
         <div className="flex items-center gap-3">
           {useSeries.map((s,i)=> (
@@ -106,12 +106,12 @@ export default function SentimentChart({ timeline, summary, series }) {
           ))}
         </div>
       </div>
-      <svg width={width} height={height} className="bg-neutral-900/40 rounded-md border border-neutral-800" onMouseMove={onMove} onMouseLeave={onLeave}>
+      <svg width={width} height={height} className="rounded-md border bg-neutral-100 border-neutral-200 dark:bg-neutral-900/40 dark:border-neutral-800" onMouseMove={onMove} onMouseLeave={onLeave}>
         {/* guide lines */}
         <line x1={pad} y1={posY} x2={width - pad} y2={posY} stroke="#34d399" strokeDasharray="6 6" opacity="0.6" />
         <line x1={pad} y1={zeroY} x2={width - pad} y2={zeroY} stroke="#94a3b8" strokeDasharray="6 6" opacity="0.6" />
         <line x1={pad} y1={negY} x2={width - pad} y2={negY} stroke="#f43f5e" strokeDasharray="6 6" opacity="0.6" />
-        <line x1={pad} y1={pad} x2={pad} y2={height - pad} stroke="#475569" />
+        <line x1={pad} y1={pad} x2={pad} y2={height - pad} stroke="var(--chart-grid)" />
         {/* emoji markers */}
         <text x={pad - 18} y={posY + 4} fontSize="14" textAnchor="end">😄</text>
         <text x={pad - 18} y={zeroY + 4} fontSize="14" textAnchor="end">😐</text>
@@ -132,10 +132,10 @@ export default function SentimentChart({ timeline, summary, series }) {
         })}
         {/* labels for cutoffs */}
         <text x={width - pad + 4} y={posY + 3} fill="#34d399" fontSize="10">0.33</text>
-        <text x={width - pad + 4} y={zeroY + 3} fill="#94a3b8" fontSize="10">0</text>
+        <text x={width - pad + 4} y={zeroY + 3} fill="var(--chart-tick)" fontSize="10">0</text>
         <text x={width - pad + 4} y={negY + 3} fill="#f43f5e" fontSize="10">-0.33</text>
-        <text x={pad} y={pad - 8} fill="#94a3b8" fontSize="10">Sentiment over time</text>
-        <text x={width - pad} y={height - 6} fill="#94a3b8" fontSize="10" textAnchor="end">Time</text>
+        <text x={pad} y={pad - 8} fill="var(--chart-tick)" fontSize="10">Sentiment over time</text>
+        <text x={width - pad} y={height - 6} fill="var(--chart-tick)" fontSize="10" textAnchor="end">Time</text>
         {/* hover crosshair */}
         {tip.show && (
           <g>
@@ -147,8 +147,8 @@ export default function SentimentChart({ timeline, summary, series }) {
         )}
       </svg>
       {tip.show && (
-        <div style={{ position: 'absolute', left: Math.min(Math.max(tip.x + 10, 0), width - 180), top: Math.max(tip.y + 10, 0) }} className="pointer-events-none bg-neutral-900/95 border border-neutral-700 rounded-md px-2 py-1 text-xs text-neutral-200 shadow">
-          <div className="mb-1 text-neutral-400">t: {tip.items[0]?.x?.toFixed ? tip.items[0].x.toFixed(2) : String(tip.items[0]?.x ?? '')}s</div>
+        <div style={{ position: 'absolute', left: Math.min(Math.max(tip.x + 10, 0), width - 180), top: Math.max(tip.y + 10, 0) }} className="pointer-events-none rounded-md px-2 py-1 text-xs shadow border bg-[var(--chart-tooltip-bg)] text-[var(--chart-tick)] border-[var(--chart-tooltip-border)]">
+          <div className="mb-1 opacity-80">t: {tip.items[0]?.x?.toFixed ? tip.items[0].x.toFixed(2) : String(tip.items[0]?.x ?? '')}s</div>
           {tip.items.map((it,i)=> (
             <div key={i} className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded" style={{ backgroundColor: it.color }} />
