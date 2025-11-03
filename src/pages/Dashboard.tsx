@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { DashboardAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
 
 const COLORS = ['#22c55e', '#ef4444', '#60a5fa'];
-const USER_ID = 7; // from requirement
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function cacheKey(userId, year, month, view){
@@ -36,10 +36,28 @@ function number(x) {
   return new Intl.NumberFormat('en-IN').format(Number(x));
 }
 
-function Card({ title, value, hint }) {
+function Info({ text }) {
   return (
-    <div className="card p-4">
-      <div className="text-sm muted mb-2 flex items-center gap-2">{title}</div>
+    <span
+      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-neutral-700 text-[10px] text-neutral-300 hover:text-white"
+      title={text}
+    >
+      i
+    </span>
+  );
+}
+
+function Card({ title, value, hint, info }) {
+  return (
+    <div className="card p-4 relative">
+      {info ? (
+        <div className="absolute right-3 top-3">
+          <Info text={info} />
+        </div>
+      ) : null}
+      <div className="text-sm muted mb-2">
+        {title}
+      </div>
       <div className="text-2xl font-semibold">{value}</div>
       {hint ? <div className="text-xs muted mt-1">{hint}</div> : null}
     </div>
@@ -47,6 +65,7 @@ function Card({ title, value, hint }) {
 }
 
 export default function Dashboard() {
+  const { userId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -63,8 +82,9 @@ export default function Dashboard() {
   const [view, setView] = useState(viewRaw);
 
   useEffect(() => {
+    if (!userId) return; // wait for auth mapping
     let mounted = true;
-    const key = cacheKey(USER_ID, year, month, view);
+    const key = cacheKey(userId, year, month, view);
 
     // 1) Fast-hydrate from cache if available
     const cached = readCache(key);
@@ -79,13 +99,13 @@ export default function Dashboard() {
       try {
         if (!cached) setLoading(true);
         const [kpiRes, countsRes, sentRes] = await Promise.all([
-          DashboardAPI.audioKPI(USER_ID),
+          DashboardAPI.audioKPI(userId),
           view === 'Monthly'
-            ? DashboardAPI.monthwiseCounts(USER_ID, year)
+            ? DashboardAPI.monthwiseCounts(userId, year)
             : view === 'Weekly'
-            ? DashboardAPI.weekwiseCounts(USER_ID, month, year)
-            : DashboardAPI.datewiseCounts(USER_ID, month, year),
-          DashboardAPI.sentimentMonthly(USER_ID, year),
+            ? DashboardAPI.weekwiseCounts(userId, month, year)
+            : DashboardAPI.datewiseCounts(userId, month, year),
+          DashboardAPI.sentimentMonthly(userId, year),
         ]);
         if (!mounted) return;
         setKpi(kpiRes);
@@ -108,7 +128,7 @@ export default function Dashboard() {
     return () => {
       mounted = false;
     };
-  }, [month, year, view]);
+  }, [month, year, view, userId]);
 
   useEffect(()=>{
     const t = setTimeout(()=> setView(viewRaw), 300);
@@ -123,11 +143,11 @@ export default function Dashboard() {
     if (!kpi) return [];
     const d = kpi?.data || kpi; // endpoint returns fields at root
     return [
-      { title: 'Total Duration Analysed', value: number(d?.totalDuration) },
-      { title: 'Avg Duration Of Call', value: number(d?.averageDuration) },
-      { title: 'Total Calls Analysed', value: number(d?.audioCount) },
-      { title: 'Avg Executive Score', value: `${number(d?.avgSalesPersonScore ?? d?.avgWeightedScore)}%` },
-      { title: 'Talk : Listen', value: `${number(d?.speechPercentage?.customerAvg)}% / ${number(d?.speechPercentage?.salespersonAvg)}%`, hint: 'Customer / Salesperson' },
+      { title: 'Total Duration Analysed', value: number(d?.totalDuration), info: 'The total sum of all analysed audio durations' },
+      { title: 'Avg Duration Of Call', value: number(d?.averageDuration), info: 'The average length of all analysed audio files' },
+      { title: 'Total Calls Analysed', value: number(d?.audioCount), info: 'Total count of Audios Analysed' },
+      { title: 'Avg Executive Score', value: `${number(d?.avgSalesPersonScore ?? d?.avgWeightedScore)}%`, info: 'The average performance score of all conversations, calculated using a predefined question set and a scoring algorithm' },
+      { title: 'Talk : Listen', value: `${number(d?.speechPercentage?.customerAvg)}% / ${number(d?.speechPercentage?.salespersonAvg)}%`, hint: 'Customer / Salesperson', info: 'Talk to listne ratio shows the average share of conversation: how much customer talks versus how much the salesperson does' },
     ];
   }, [kpi]);
 
@@ -182,7 +202,7 @@ export default function Dashboard() {
       {error && <div className="border border-red-600 text-red-400 p-3 rounded-lg">{error}</div>}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {kpis.map((k) => (
-          <Card key={k.title} title={k.title} value={k.value} hint={k.hint} />
+          <Card key={k.title} title={k.title} value={k.value} hint={k.hint} info={k.info} />
         ))}
       </div>
 
@@ -216,7 +236,10 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="card p-4 lg:col-span-2">
-          <div className="font-semibold mb-3">Monthly Sentiment Analysis</div>
+          <div className="font-semibold mb-3 flex items-center">
+            Monthly Sentiment Analysis
+            <Info text="Shows monthly sentiment trends based on the analysed audio for each month" />
+          </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={sentMonthlySeries}>
@@ -233,7 +256,10 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="card p-4">
-          <div className="font-semibold mb-3">Overall Sentiment of Audios</div>
+          <div className="font-semibold mb-3 flex items-center">
+            Overall Sentiment of Audios
+            <Info text="Displays the percentage breakdown of positive, negative and neutral sentiments across all analysed audios" />
+          </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>

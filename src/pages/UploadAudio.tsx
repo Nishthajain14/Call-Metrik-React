@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Upload, Link2 } from 'lucide-react';
 import { AudioUploadAPI, getErrorMessage, isNetworkError } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
-const USER_ID = 7;
 
 export default function UploadAudio() {
+  const { userId } = useAuth();
   const [tab, setTab] = useState('file');
   const [files, setFiles] = useState([]);
   const [dragOver, setDragOver] = useState(false);
@@ -57,11 +58,11 @@ export default function UploadAudio() {
 
   async function onUploadFiles() {
     try {
-      if (!files.length) return;
+      if (!files.length || !userId) return;
       setLoading(true);
       setMessage('');
       setError('');
-      const res = await AudioUploadAPI.uploadFile(USER_ID, files);
+      const res = await AudioUploadAPI.uploadFile(userId, files);
       setMessage(typeof res === 'string' ? res : 'Uploaded successfully');
       setFiles([]);
     } catch (e) {
@@ -74,11 +75,11 @@ export default function UploadAudio() {
 
   async function onUploadUrl() {
     try {
-      if (!url.trim()) return;
+      if (!url.trim() || !userId) return;
       setLoading(true);
       setMessage('');
       setError('');
-      const res = await AudioUploadAPI.uploadUrl(USER_ID, url.trim());
+      const res = await AudioUploadAPI.uploadUrl(userId, url.trim());
       setMessage(typeof res === 'string' ? res : 'URL submitted successfully');
       setUrl('');
     } catch (e) {

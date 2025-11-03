@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
@@ -7,6 +7,8 @@ import AudioAnalysisMonthly from './pages/AudioAnalysisMonthly';
 import AudioAnalysisList from './pages/AudioAnalysisList';
 import AudioDetails from './pages/AudioDetails';
 import UploadAudio from './pages/UploadAudio';
+import Login from './pages/Login';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import './index.css';
 
 function AppLayout({ children, title }) {
@@ -23,34 +25,30 @@ function AppLayout({ children, title }) {
 }
 
 export default function App() {
+  function RequireAuth({ children, title }){
+    const { isLoading, session } = useAuth();
+    if (isLoading) return (
+      <div className="min-h-screen flex items-center justify-center bg-neutral-950 text-neutral-200">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-600 border-t-white" />
+      </div>
+    );
+    if (!session) return <Navigate to="/login" replace />;
+    return <AppLayout title={title}>{children}</AppLayout>;
+  }
+
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={<AppLayout title="Dashboard"><Dashboard /></AppLayout>}
-        />
-        <Route
-          path="/audio-analysis"
-          element={<AppLayout title="Audio Analysis"><AudioAnalysisMonthly /></AppLayout>}
-        />
-        <Route
-          path="/audio-analysis/:month"
-          element={<AppLayout title="Audio Analysis"><AudioAnalysisList /></AppLayout>}
-        />
-        <Route
-          path="/audio-details/:audioId"
-          element={<AppLayout title="Audio Details"><AudioDetails /></AppLayout>}
-        />
-        <Route
-          path="/upload"
-          element={<AppLayout title="Upload Audio"><UploadAudio /></AppLayout>}
-        />
-        <Route
-          path="/reports"
-          element={<AppLayout title="Reports"><Reports /></AppLayout>}
-        />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<RequireAuth title="Dashboard"><Dashboard /></RequireAuth>} />
+          <Route path="/audio-analysis" element={<RequireAuth title="Audio Analysis"><AudioAnalysisMonthly /></RequireAuth>} />
+          <Route path="/audio-analysis/:month" element={<RequireAuth title="Audio Analysis"><AudioAnalysisList /></RequireAuth>} />
+          <Route path="/audio-details/:audioId" element={<RequireAuth title="Audio Details"><AudioDetails /></RequireAuth>} />
+          <Route path="/upload" element={<RequireAuth title="Upload Audio"><UploadAudio /></RequireAuth>} />
+          <Route path="/reports" element={<RequireAuth title="Reports"><Reports /></RequireAuth>} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -1,9 +1,11 @@
-import { Bell, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ title }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { profile, session } = useAuth();
   const isSubPage = pathname.startsWith('/audio-analysis') || pathname.startsWith('/audio-details');
   const canGoBack = pathname !== '/' && !isSubPage;
   return (
@@ -21,14 +23,11 @@ export default function Navbar({ title }) {
         <div className="text-lg font-semibold">{title}</div>
       </div>
       <div className="flex items-center gap-3">
-        <button className="p-2 rounded-lg hover:bg-neutral-800">
-          <Bell size={18} />
-        </button>
         <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-neutral-800">
           <div className="size-7 rounded-full bg-gradient-to-br from-brand-500 to-brand-700" />
           <div className="leading-tight">
-            <div className="text-sm">Pranav</div>
-            <div className="text-xs text-neutral-400">pranav@populardigital.ai</div>
+            <div className="text-sm">{profile?.User_Name || session?.user?.email || 'User'}</div>
+            <div className="text-xs text-neutral-400">{profile?.User_Email || session?.user?.email || ''}</div>
           </div>
         </div>
       </div>

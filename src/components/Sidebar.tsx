@@ -1,7 +1,10 @@
 import { Home, BarChart3, UploadCloud, FileText, LogOut } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const navLinkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-neutral-800 transition-colors ${
       isActive ? 'bg-neutral-800 text-white' : 'text-neutral-300'
@@ -25,7 +28,10 @@ export default function Sidebar() {
         </NavLink>
       </nav>
       <div className="p-4">
-        <button className="w-full border border-neutral-700 text-neutral-200 rounded-lg px-4 py-2 hover:bg-neutral-800 flex items-center gap-2 justify-center">
+        <button
+          onClick={async ()=>{ await signOut(); navigate('/login', { replace: true }); }}
+          className="w-full border border-neutral-700 text-neutral-200 rounded-lg px-4 py-2 hover:bg-neutral-800 flex items-center gap-2 justify-center"
+        >
           <LogOut size={16} /> Logout
         </button>
       </div>

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { ReportsAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, FunnelChart, Funnel, LabelList } from 'recharts';
 
-const USER_ID = 7;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 function readCache(key){ try{ const raw = sessionStorage.getItem(key); if(!raw) return null; const obj = JSON.parse(raw); if(!obj||!obj.t||Date.now()-obj.t> CACHE_TTL_MS) return null; return obj.v; }catch{ return null; } }
 function writeCache(key, value){ try{ sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); }catch{} }
@@ -16,11 +16,25 @@ function Arrow({ up }) {
   );
 }
 
-function Card({ title, subtitle, value, lastValue }) {
+function Info({ text }){
+  return (
+    <span
+      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-neutral-700 text-[10px] text-neutral-300 hover:text-white"
+      title={text}
+    >
+      i
+    </span>
+  );
+}
+
+function Card({ title, subtitle, value, lastValue, info }) {
   const up = typeof value === 'number' && typeof lastValue === 'number' ? value >= lastValue : null;
   return (
     <div className="card p-4">
-      <div className="text-sm muted mb-1">{title}</div>
+      <div className="text-sm muted mb-1 flex items-center gap-2">
+        {title}
+        {info ? <Info text={info} /> : null}
+      </div>
       <div className="text-2xl font-semibold flex items-center gap-2">
         <span>{typeof value === 'number' ? value.toLocaleString() : value}</span>
         {up !== null && <Arrow up={up} />}
@@ -50,6 +64,7 @@ function LegendItem({ color, label, active, onClick }) {
 }
 
 export default function Reports() {
+  const { userId } = useAuth();
   const [cards, setCards] = useState(null);
   const [callDist, setCallDist] = useState([]);
   const [peak, setPeak] = useState([]);
@@ -65,10 +80,11 @@ export default function Reports() {
   const [scoreCard, setScoreCard] = useState(null);
 
   useEffect(() => {
+    if (!userId) return;
     let on = true;
     async function load() {
       try {
-        const key = keyReports(USER_ID, callStatus, month, scoreType);
+        const key = keyReports(userId, callStatus, month, scoreType);
         const cached = readCache(key);
         if (cached && on){
           setCards(cached.cards);
@@ -84,14 +100,14 @@ export default function Reports() {
           setLoading(true);
         }
         const [cm, cd, ph, funnelRes, ar, ev, ad, sc] = await Promise.all([
-          ReportsAPI.cardMetrics(USER_ID, { callStatus }),
-          ReportsAPI.callTimeDistribution(USER_ID, { callStatus }),
-          ReportsAPI.peakCallHours(USER_ID, { callStatus }),
-          ReportsAPI.callToLeadConversion(USER_ID, { callStatus }),
-          ReportsAPI.agentReport(USER_ID, { callStatus }),
-          ReportsAPI.eventsByAgent(USER_ID),
-          ReportsAPI.agentFollowedScript(USER_ID, { callStatus }),
-          ReportsAPI.agentScoreCard(USER_ID, { month, scoreType, callStatus }),
+          ReportsAPI.cardMetrics(userId, { callStatus }),
+          ReportsAPI.callTimeDistribution(userId, { callStatus }),
+          ReportsAPI.peakCallHours(userId, { callStatus }),
+          ReportsAPI.callToLeadConversion(userId, { callStatus }),
+          ReportsAPI.agentReport(userId, { callStatus }),
+          ReportsAPI.eventsByAgent(userId),
+          ReportsAPI.agentFollowedScript(userId, { callStatus }),
+          ReportsAPI.agentScoreCard(userId, { month, scoreType, callStatus }),
         ]);
         if (!on) return;
         setCards(cm);
@@ -114,7 +130,7 @@ export default function Reports() {
     return () => {
       on = false;
     };
-  }, [callStatus, month, scoreType]);
+  }, [callStatus, month, scoreType, userId]);
 
   const callDistData = useMemo(() => {
     const arr = Array.isArray(callDist) ? callDist : [];
@@ -180,10 +196,10 @@ export default function Reports() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card title="YTD" subtitle="Last YTD" value={Number(cards?.ytd ?? 0)} lastValue={Number(cards?.lastYear ?? 0)} />
-        <Card title="MTD" subtitle="Last MTD" value={Number(cards?.mtd ?? 0)} lastValue={Number(cards?.lastMonth ?? 0)} />
-        <Card title="WTD" subtitle="Last WTD" value={Number(cards?.wtd ?? 0)} lastValue={Number(cards?.lastWeek ?? 0)} />
-        <Card title="Yesterday" subtitle="Day Before" value={Number(cards?.yesterday ?? 0)} lastValue={Number(cards?.dayBefore ?? 0)} />
+        <Card title="YTD" subtitle="Last YTD" value={Number(cards?.ytd ?? 0)} lastValue={Number(cards?.lastYear ?? 0)} info="Total calls since the start of the year" />
+        <Card title="MTD" subtitle="Last MTD" value={Number(cards?.mtd ?? 0)} lastValue={Number(cards?.lastMonth ?? 0)} info="Total calls since the start of the month" />
+        <Card title="WTD" subtitle="Last WTD" value={Number(cards?.wtd ?? 0)} lastValue={Number(cards?.lastWeek ?? 0)} info="Total calls since the start of the week" />
+        <Card title="Yesterday" subtitle="Day Before" value={Number(cards?.yesterday ?? 0)} lastValue={Number(cards?.dayBefore ?? 0)} info="Total calls made on the previous day" />
       </div>
 
       {/* Call Time Distribution + Peak Hours */}
@@ -431,7 +447,9 @@ export default function Reports() {
 
       {/* Agent Performance Report (table) */}
       <div className="card p-4">
-        <div className="font-semibold mb-3">Agent Performance Report</div>
+        <div className="font-semibold mb-3 flex items-center">
+        Agent Performance Report
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-neutral-300">

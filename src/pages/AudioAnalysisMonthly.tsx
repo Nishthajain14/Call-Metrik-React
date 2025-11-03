@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { AudioAPI, getErrorMessage, isNetworkError } from '../lib/api';
 
-const USER_ID = 7;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 function readCache(key){ try{ const raw = sessionStorage.getItem(key); if(!raw) return null; const obj = JSON.parse(raw); if(!obj||!obj.t||Date.now()-obj.t> CACHE_TTL_MS) return null; return obj.v; }catch{ return null; } }
 function writeCache(key, value){ try{ sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); }catch{} }
@@ -10,20 +10,22 @@ function keyMonthly(userId, year){ return `monthly:${userId}:${year}`; }
 
 export default function AudioAnalysisMonthly() {
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [year, setYear] = useState(new Date().getFullYear());
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!userId) return;
     let on = true;
     async function load() {
       try {
-        const key = keyMonthly(USER_ID, year);
+        const key = keyMonthly(userId, year);
         const cached = readCache(key);
         if (cached && on){ setRows(cached); setLoading(false); }
         else { setLoading(true); }
-        const data = await AudioAPI.monthlySummary(USER_ID, year);
+        const data = await AudioAPI.monthlySummary(userId, year);
         if (!on) return;
         const arr = Array.isArray(data) ? data : data?.data || [];
         setRows(arr);
@@ -37,7 +39,7 @@ export default function AudioAnalysisMonthly() {
     }
     load();
     return () => { on = false; };
-  }, [year]);
+  }, [year, userId]);
 
   const months = useMemo(() => [
     'January','February','March','April','May','June','July','August','September','October','November','December'

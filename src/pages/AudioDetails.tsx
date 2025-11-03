@@ -1,3 +1,4 @@
+import { useAuth } from '../context/AuthContext';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AudioAPI, getErrorMessage, isNetworkError } from '../lib/api';
@@ -16,7 +17,6 @@ import KeywordsTable from '../components/AudioDetails/KeywordsTable';
 
  
 
-const USER_ID = 7;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 function readCache(key){
   try{ const raw = sessionStorage.getItem(key); if(!raw) return null; const obj = JSON.parse(raw); if(!obj||!obj.t||Date.now()-obj.t> CACHE_TTL_MS) return null; return obj.v; }catch{ return null; }
@@ -27,6 +27,7 @@ function detailsKey(userId, audioId){ return `details:${userId}:${audioId}`; }
 export default function AudioDetails() {
   const { audioId } = useParams();
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [insights, setInsights] = useState(null);
   const [audioUrl, setAudioUrl] = useState('');
   const [tab, setTab] = useState('Transcription');
@@ -60,16 +61,17 @@ export default function AudioDetails() {
   useEffect(() => {
     let on = true;
     async function load() {
+      if (!userId) return;
       try {
-        const key = detailsKey(USER_ID, audioId);
+        const key = detailsKey(userId, audioId);
         const cached = readCache(key);
         if (cached && on){
           setInsights(cached.insights);
           setAudioUrl(cached.audioUrl || '');
         }
         const [insRaw, playerRaw] = await Promise.all([
-          AudioAPI.audioInsights(USER_ID, audioId),
-          AudioAPI.audioPlayerUrl(USER_ID, audioId),
+          AudioAPI.audioInsights(userId, audioId),
+          AudioAPI.audioPlayerUrl(userId, audioId),
         ]);
         if (!on) return;
         const arr = Array.isArray(insRaw) ? insRaw : (insRaw?.data || []);
@@ -221,7 +223,7 @@ export default function AudioDetails() {
     }
     load();
     return () => { on = false; };
-  }, [audioId]);
+  }, [audioId, userId]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -252,12 +254,13 @@ export default function AudioDetails() {
       // Debug logs to verify payload and identifiers
       try {
         console.group('Manual Audit Submit');
-        console.log('userId:', USER_ID, 'audioId:', audioId);
+        console.log('userId:', userId, 'audioId:', audioId);
         console.log('responses count:', responses.length);
         console.table(responses);
       } catch {}
 
-      await AudioAPI.updateManualAudit(USER_ID, audioId, responses);
+      if (!userId) return;
+      await AudioAPI.updateManualAudit(userId, audioId, responses);
       // optimistic store
       setInsights((prev) => ({ ...prev, questionnaireGroups: updated }));
     } catch (e) {

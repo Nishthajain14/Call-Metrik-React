@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Link2, FileText } from 'lucide-react';
 import { AudioAPI, AudioProcessAPI, getErrorMessage, isNetworkError } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
-const USER_ID = 7;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function readCache(key){
@@ -32,6 +32,7 @@ export default function AudioAnalysisList() {
   const { month } = useParams();
   const q = useQuery();
   const navigate = useNavigate();
+  const { userId } = useAuth();
   const [year] = useState(Number(q.get('year')) || new Date().getFullYear());
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +49,8 @@ export default function AudioAnalysisList() {
 
   async function load() {
     try {
-      const cacheK = keyRows(USER_ID, month, year, filters);
+      if (!userId) return;
+      const cacheK = keyRows(userId, month, year, filters);
       const cached = readCache(cacheK);
       if (cached) { setRows(cached); setLoading(false); }
       else { setLoading(true); }
@@ -57,7 +59,7 @@ export default function AudioAnalysisList() {
       if (filters.sentiment?.length) params.sentiment = filters.sentiment.join(',');
       if (filters.uploadSource?.length) params.uploadSource = filters.uploadSource.join(',');
       params.limit = 10000; // fetch all
-      const data = await AudioAPI.monthRecords(USER_ID, month, year, params);
+      const data = await AudioAPI.monthRecords(userId, month, year, params);
       const arr = Array.isArray(data) ? data : data?.data || [];
       setRows(arr);
       writeCache(cacheK, arr);
@@ -69,7 +71,7 @@ export default function AudioAnalysisList() {
     }
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [month, year, JSON.stringify(filters)]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [month, year, JSON.stringify(filters), userId]);
 
   useEffect(() => {
     async function loadOptions(){
@@ -206,7 +208,7 @@ export default function AudioAnalysisList() {
   async function handleProcess(audioId){
     try{
       setBusy((b)=>({ ...b, [audioId]: true }));
-      const res = await AudioProcessAPI.process(USER_ID, audioId);
+      const res = await AudioProcessAPI.process(userId, audioId);
       try { console.group('Process Trigger'); console.log('audioId', audioId); console.log('response', res); console.groupEnd(); } catch {}
       const msg = typeof res === 'string' ? res : (res?.message || 'Processing triggered');
       setNotice({ type: 'ok', text: msg });
@@ -222,7 +224,7 @@ export default function AudioAnalysisList() {
   async function handleReAudit(audioId){
     try{
       setBusy((b)=>({ ...b, [audioId]: true }));
-      const res = await AudioProcessAPI.reAudit(USER_ID, audioId);
+      const res = await AudioProcessAPI.reAudit(userId, audioId);
       try { console.group('Re-Audit Trigger'); console.log('audioId', audioId); console.log('response', res); console.groupEnd(); } catch {}
       const msg = typeof res === 'string' ? res : (res?.message || 'Re-Audit triggered');
       setNotice({ type: 'ok', text: msg });
