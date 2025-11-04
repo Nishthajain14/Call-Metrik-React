@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ReportsAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, FunnelChart, Funnel, LabelList } from 'recharts';
+import { useLoading } from '../context/LoadingContext';
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 function readCache(key){ try{ const raw = sessionStorage.getItem(key); if(!raw) return null; const obj = JSON.parse(raw); if(!obj||!obj.t||Date.now()-obj.t> CACHE_TTL_MS) return null; return obj.v; }catch{ return null; } }
@@ -27,21 +28,21 @@ function Info({ text }){
   );
 }
 
-function Card({ title, subtitle, value, lastValue, info }) {
+function Card({ title, subtitle, value, lastValue, info, variant = 'metric-purple' }) {
   const up = typeof value === 'number' && typeof lastValue === 'number' ? value >= lastValue : null;
   return (
-    <div className="card p-4">
-      <div className="text-sm muted mb-1 flex items-center gap-2">
+    <div className={`metric-subtle ${variant}`}>
+      <div className="text-sm muted mb-1 flex items-center gap-2 italic">
         {title}
         {info ? <Info text={info} /> : null}
       </div>
       <div className="text-2xl font-semibold flex items-center gap-2">
-        <span>{typeof value === 'number' ? value.toLocaleString() : value}</span>
+        <span className="kpi-number">{typeof value === 'number' ? value.toLocaleString() : value}</span>
         {up !== null && <Arrow up={up} />}
       </div>
       {subtitle ? (
-        <div className="text-xs muted mt-1">
-          {subtitle} : <span className="text-neutral-300">{typeof lastValue === 'number' ? lastValue.toLocaleString() : lastValue}</span>
+        <div className="text-xs mt-1 opacity-90">
+          {subtitle} : <span className="font-medium">{typeof lastValue === 'number' ? lastValue.toLocaleString() : lastValue}</span>
         </div>
       ) : null}
     </div>
@@ -65,6 +66,7 @@ function LegendItem({ color, label, active, onClick }) {
 
 export default function Reports() {
   const { userId } = useAuth();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [cards, setCards] = useState(null);
   const [callDist, setCallDist] = useState([]);
   const [peak, setPeak] = useState([]);
@@ -99,6 +101,7 @@ export default function Reports() {
         } else {
           setLoading(true);
         }
+        setGlobalLoading(true);
         const [cm, cd, ph, funnelRes, ar, ev, ad, sc] = await Promise.all([
           ReportsAPI.cardMetrics(userId, { callStatus }),
           ReportsAPI.callTimeDistribution(userId, { callStatus }),
@@ -124,6 +127,7 @@ export default function Reports() {
         setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
       } finally {
         setLoading(false);
+        setGlobalLoading(false);
       }
     }
     load();
@@ -176,8 +180,8 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="text-xl font-semibold">Reports</div>
+      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
+        <div className="text-xl font-semibold font-display">Reports</div>
         <div className="flex items-center gap-3">
           <div className="text-sm muted">Call Status</div>
           <select
@@ -194,40 +198,52 @@ export default function Reports() {
       </div>
       {error && <div className="border border-red-600 text-red-700 dark:text-red-400 p-3 rounded-lg">{error}</div>}
 
-      {/* KPI Cards */}
+      {/* KPI Cards with per-card gradients */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card title="YTD" subtitle="Last YTD" value={Number(cards?.ytd ?? 0)} lastValue={Number(cards?.lastYear ?? 0)} info="Total calls since the start of the year" />
-        <Card title="MTD" subtitle="Last MTD" value={Number(cards?.mtd ?? 0)} lastValue={Number(cards?.lastMonth ?? 0)} info="Total calls since the start of the month" />
-        <Card title="WTD" subtitle="Last WTD" value={Number(cards?.wtd ?? 0)} lastValue={Number(cards?.lastWeek ?? 0)} info="Total calls since the start of the week" />
-        <Card title="Yesterday" subtitle="Day Before" value={Number(cards?.yesterday ?? 0)} lastValue={Number(cards?.dayBefore ?? 0)} info="Total calls made on the previous day" />
+        <Card title="YTD" subtitle="Last YTD" value={Number(cards?.ytd ?? 0)} lastValue={Number(cards?.lastYear ?? 0)} info="Total calls since the start of the year" variant="metric-purple" />
+        <Card title="MTD" subtitle="Last MTD" value={Number(cards?.mtd ?? 0)} lastValue={Number(cards?.lastMonth ?? 0)} info="Total calls since the start of the month" variant="metric-teal" />
+        <Card title="WTD" subtitle="Last WTD" value={Number(cards?.wtd ?? 0)} lastValue={Number(cards?.lastWeek ?? 0)} info="Total calls since the start of the week" variant="metric-orange" />
+        <Card title="Yesterday" subtitle="Day Before" value={Number(cards?.yesterday ?? 0)} lastValue={Number(cards?.dayBefore ?? 0)} info="Total calls made on the previous day" variant="metric-pink" />
       </div>
 
       {/* Call Time Distribution + Peak Hours */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-4">
-        <div className="card p-4">
-          <div className="font-semibold mb-3">Call Time Distribution</div>
-          <div className="h-72">
+        <div className="card-elevated p-4 hover-lift ambient">
+          <div className="font-semibold font-display mb-3">Call Time Distribution</div>
+          <div className={`h-72`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={callDistData}>
+                <defs>
+                  <linearGradient id="barA" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#a855f7"/>
+                    <stop offset="100%" stopColor="#6366f1"/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
                 <XAxis dataKey="range" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
                 <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
                 <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ fill: 'transparent' }} />
-                <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="url(#barA)" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={900} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="card p-4">
-          <div className="font-semibold mb-3">Peak Call Hours</div>
-          <div className="h-72">
+        <div className="card-elevated p-4 hover-lift ambient">
+          <div className="font-semibold font-display mb-3">Peak Call Hours</div>
+          <div className={`h-72`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={peakHoursData}>
+                <defs>
+                  <linearGradient id="barB" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#22c55e"/>
+                    <stop offset="100%" stopColor="#10b981"/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
                 <XAxis dataKey="range" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
                 <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
                 <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ fill: 'transparent' }} />
-                <Bar dataKey="count" fill="#7c3aed" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="count" fill="url(#barB)" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={900} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -236,8 +252,8 @@ export default function Reports() {
 
       {/* Call to Lead Conversion Ratio + Eventwise table side-by-side */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="card p-4">
-          <div className="font-semibold mb-3">Call To Lead Conversion Ratio</div>
+        <div className="card-elevated p-4 hover-lift">
+          <div className="font-semibold font-display mb-3">Call To Lead Conversion Ratio</div>
           <div className="h-[28rem] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%" className="max-w-3xl">
               <FunnelChart margin={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -288,10 +304,10 @@ export default function Reports() {
           </div>
         </div>
         {/* Eventwise Agent Performance moved next to funnel */}
-        <div className="card p-4">
-          <div className="font-semibold mb-3">Eventwise Agent Performance</div>
+        <div className="card-elevated p-4 hover-lift">
+          <div className="font-semibold font-display mb-3">Eventwise Agent Performance</div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-zebra">
               <thead className="text-left text-neutral-600 dark:text-neutral-300">
                 <tr>
                   <th className="py-2 pr-4">Event</th>
@@ -318,10 +334,10 @@ export default function Reports() {
       </div>
 
       {/* Agent Script Adherence (placed below funnel/eventwise) */}
-      <div className="card p-4">
-        <div className="font-semibold mb-3">Agent Script Adherence</div>
+      <div className="card-elevated p-4 hover-lift">
+        <div className="font-semibold font-display mb-3">Agent Script Adherence</div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-glass table-zebra">
             <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Agent</th>
@@ -364,7 +380,7 @@ export default function Reports() {
       {/* Agent Performance Timeline */}
       <div className="card p-4">
         <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold">Agent Performance Timeline</div>
+          <div className="font-semibold font-display">Agent Performance Timeline</div>
           <div className="flex items-center gap-2">
             <select value={scoreType} onChange={(e) => setScoreType(e.target.value)} className="input rounded-md">
               <option>OFE Score</option>
@@ -382,7 +398,7 @@ export default function Reports() {
             <div className="min-w-[820px]">
               <div
                 className="grid"
-                style={{ gridTemplateColumns: `160px repeat(${timeline.dates.length}, 1fr)` }}
+                style={{ gridTemplateColumns: `160px repeat(${timeline.dates.length}, 1fr)`, paddingTop: 28 }}
               >
                 {/* Sticky corner blank cell */}
                 <div
@@ -410,12 +426,13 @@ export default function Reports() {
                     </div>
                     {timeline.grid[ri]?.map?.((val, ci) => {
                       const v = val === '-' ? 0 : Number(val) || 0;
-                      // blue -> yellow -> green scale
-                      const t = v / 100;
-                      const r = Math.round(40 + 140 * t);
-                      const g = Math.round(80 + 120 * t);
-                      const b = Math.round(160 - 120 * t);
-                      const bg = v ? `rgb(${r}, ${g}, ${b})` : 'var(--chart-grid)';
+                      // perceptual scale with better low-end sensitivity and broader range
+                      let t = Math.max(0, Math.min(1, v / 100));
+                      t = Math.pow(t, 0.5); // emphasize small differences
+                      const hue = 250 - 190 * t; // purple(250) -> greenish(60)
+                      const sat = 70 + 20 * t;   // 70%..90%
+                      const light = 88 - 38 * t; // 88%..50%
+                      const bg = v ? `hsl(${hue}deg ${sat}% ${light}%)` : 'var(--chart-grid)';
                       return (
                         <div
                           key={`${u}-${ci}`}
@@ -446,8 +463,8 @@ export default function Reports() {
       </div>
 
       {/* Agent Performance Report (table) */}
-      <div className="card p-4">
-        <div className="font-semibold mb-3 flex items-center">
+      <div className="card-elevated p-4 hover-lift">
+        <div className="font-semibold font-display mb-3 flex items-center">
         Agent Performance Report
         </div>
         <div className="overflow-x-auto">

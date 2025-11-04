@@ -41,23 +41,23 @@ export default function Sidebar() {
   }, []);
 
   const navLinkClass = ({ isActive }) =>
-    `flex items-center ${collapsed ? 'justify-center px-2' : 'justify-start px-4'} gap-3 py-3 rounded-lg transition-colors ${
+    `flex items-center ${collapsed ? 'justify-center px-2' : 'justify-start px-4'} gap-3 py-3 rounded-lg transition-all ${
       isActive
-        ? 'bg-neutral-200 text-neutral-900 dark:bg-neutral-800 dark:text-white'
-        : 'text-neutral-700 dark:text-neutral-300'
-    } hover:bg-neutral-200 dark:hover:bg-neutral-800`;
+        ? 'bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-md'
+        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60'
+    }`;
 
   return (
     <aside
-      className="fixed inset-y-0 left-0 bg-white border-r border-neutral-200 dark:bg-neutral-900 dark:border-neutral-800 hidden md:flex flex-col z-40 transition-[width] duration-200"
+      className="fixed inset-y-0 left-0 hidden md:flex flex-col z-40 transition-[width] duration-300 glass surface sidebar-ambient"
       style={{ width: collapsed ? '4rem' : '16rem' }}
     >
       <div className={`h-16 flex items-center ${collapsed ? 'justify-center px-0' : 'justify-center px-3'} relative`}
       >
         {collapsed ? (
-          <img src={theme === 'dark' ? smallLogoDark : smallLogoLight} alt="CallMetriK" className="h-10 w-10 object-contain" />
+          <img src={theme === 'dark' ? smallLogoDark : smallLogoLight} alt="CallMetriK" className="h-10 w-10 object-contain animate-floaty" />
         ) : (
-          <img src={theme === 'dark' ? bigLogoDark : bigLogoLight} alt="CallMetriK" className="h-14 object-contain" />
+          <img src={theme === 'dark' ? bigLogoDark : bigLogoLight} alt="CallMetriK" className="h-14 object-contain animate-fadeIn" />
         )}
       </div>
       <nav className="flex-1 px-3 space-y-2">
@@ -77,7 +77,7 @@ export default function Sidebar() {
       <div className="p-4">
         <button
           onClick={async ()=>{ await signOut(); navigate('/login', { replace: true }); }}
-          className={`w-full border rounded-lg ${collapsed ? 'px-0' : 'px-4'} py-2 flex items-center gap-2 justify-center border-neutral-300 text-neutral-700 hover:bg-neutral-200 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800`}
+          className={`w-full ${collapsed ? 'px-0' : 'px-4'} py-2 flex items-center gap-2 justify-center glass surface hover:brightness-110`}
         >
           <LogOut size={16} />
           <span className={collapsed ? 'hidden' : 'inline'}>Logout</span>

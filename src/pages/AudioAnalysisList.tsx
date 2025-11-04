@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Link2, FileText } from 'lucide-react';
+import { ChevronLeft, Link2, FileText, FolderOpen, Upload as UploadIcon } from 'lucide-react';
 import { AudioAPI, AudioProcessAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useLoading } from '../context/LoadingContext';
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -33,6 +34,7 @@ export default function AudioAnalysisList() {
   const q = useQuery();
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [year] = useState(Number(q.get('year')) || new Date().getFullYear());
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +56,7 @@ export default function AudioAnalysisList() {
       const cached = readCache(cacheK);
       if (cached) { setRows(cached); setLoading(false); }
       else { setLoading(true); }
+      setGlobalLoading(true);
       const params: any = {};
       if (filters.audioStatus?.length) params.audioStatus = filters.audioStatus.join(',');
       if (filters.sentiment?.length) params.sentiment = filters.sentiment.join(',');
@@ -68,6 +71,7 @@ export default function AudioAnalysisList() {
       setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   }
 
@@ -86,6 +90,8 @@ export default function AudioAnalysisList() {
     }
     loadOptions();
   }, []);
+
+  // no-op: viewport-centered modal
 
   function toSeconds(hms) {
     if (!hms) return 0;
@@ -207,6 +213,7 @@ export default function AudioAnalysisList() {
 
   async function handleProcess(audioId){
     try{
+      setGlobalLoading(true);
       setBusy((b)=>({ ...b, [audioId]: true }));
       const res = await AudioProcessAPI.process(userId, audioId);
       try { console.group('Process Trigger'); console.log('audioId', audioId); console.log('response', res); console.groupEnd(); } catch {}
@@ -218,11 +225,13 @@ export default function AudioAnalysisList() {
       setNotice({ type: 'err', text: isNetworkError(e) ? 'Network error. Please check your connection.' : msg });
     } finally{
       setBusy((b)=>{ const x = { ...b }; delete x[audioId]; return x; });
+      setGlobalLoading(false);
     }
   }
 
   async function handleReAudit(audioId){
     try{
+      setGlobalLoading(true);
       setBusy((b)=>({ ...b, [audioId]: true }));
       const res = await AudioProcessAPI.reAudit(userId, audioId);
       try { console.group('Re-Audit Trigger'); console.log('audioId', audioId); console.log('response', res); console.groupEnd(); } catch {}
@@ -239,13 +248,13 @@ export default function AudioAnalysisList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
         <div className="flex items-center gap-2">
           <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-200 text-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-300"><ChevronLeft size={18} /></button>
           <div className="text-xl font-semibold">Analysed Audio Files</div>
         </div>
       {notice.text && (
-        <div className={`text-sm px-3 py-2 rounded-md border ${notice.type==='err' ? 'bg-rose-950/40 text-rose-300 border-rose-800':'bg-emerald-950/40 text-emerald-300 border-emerald-800'}`}>{notice.text}</div>
+        <div className={`text-sm px-3 py-2 rounded-md glass surface ${notice.type==='err' ? 'text-rose-300':'text-emerald-300'}`}>{notice.text}</div>
       )}
         <div className="flex items-center gap-2">
           <select value={pageSize} onChange={(e)=>setPageSize(Number(e.target.value))} className="input rounded-md">
@@ -254,16 +263,16 @@ export default function AudioAnalysisList() {
             <option value={75}>75</option>
             <option value={-1}>All</option>
           </select>
-          <button onClick={load} className="rounded-md px-2 py-1 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Reload</button>
-          <button onClick={()=>setShowFilters(true)} className="rounded-md px-2 py-1 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Filter</button>
-          <Link to="/upload" className="btn-primary text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
+          <button onClick={load} className="rounded-md px-2 py-1 text-sm glass surface hover:brightness-110">Reload</button>
+          <button onClick={()=>setShowFilters(true)} className="rounded-md px-2 py-1 text-sm glass surface hover:brightness-110">Filter</button>
+          <Link to="/upload" className="btn-gradient text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
         </div>
       </div>
 
-      <div className="card p-4">
+      <div className="card-elevated p-4 hover-lift">
         {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-glass table-zebra">
             <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">SL No</th>
@@ -296,31 +305,55 @@ export default function AudioAnalysisList() {
                   const status = hasCall ? (r.Call ?? r.call ?? '') : (r.audiostatus || r.audioStatus || r.status || '');
                   const sentimentUi = (()=>{
                     const s = String(sent).toLowerCase();
-                    if (s.includes('positive')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-300">🙂<span className="hidden sm:inline">Positive</span></span>;
-                    if (s.includes('negative')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-600/20 dark:text-rose-300">🙁<span className="hidden sm:inline">Negative</span></span>;
-                    if (s.includes('neutral')) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-600/20 dark:text-slate-300">😐<span className="hidden sm:inline">Neutral</span></span>;
-                    return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-600/20 dark:text-amber-300">?<span className="hidden sm:inline">Unknown</span></span>;
+                    if (s.includes('positive')) return <span className="pill pill-ok">🙂<span className="hidden sm:inline">Positive</span></span>;
+                    if (s.includes('negative')) return <span className="pill pill-bad">🙁<span className="hidden sm:inline">Negative</span></span>;
+                    if (s.includes('neutral')) return <span className="pill pill-info">😐<span className="hidden sm:inline">Neutral</span></span>;
+                    return <span className="pill pill-warn">?<span className="hidden sm:inline">Unknown</span></span>;
                   })();
                   const statusUi = (()=>{
                     const s = String(status).toLowerCase();
-                    if (!hasCall && s.includes('processed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-cyan-600 text-black dark:bg-cyan-600/70">Processed</span>;
-                    if (s.includes('insufficient')) return <span className="inline-block px-2 py-0.5 rounded-md bg-amber-500 text-black dark:bg-amber-500/80">Insufficient Audio Duration</span>;
-                    if (s.includes('failed')) return <span className="inline-block px-2 py-0.5 rounded-md bg-rose-500 text-black dark:bg-rose-500/80">Failed</span>;
-                    if (s) return <span className="inline-block px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 capitalize dark:bg-indigo-500/30 dark:text-indigo-200">{s}</span>;
-                    return <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-700 text-neutral-200">-</span>;
+                    if (!hasCall && s.includes('processed')) return <span className="pill pill-ok">Processed</span>;
+                    if (s.includes('insufficient')) return <span className="pill pill-warn">Insufficient</span>;
+                    if (s.includes('failed')) return <span className="pill pill-bad">Failed</span>;
+                    if (s) return <span className="pill pill-info capitalize">{s}</span>;
+                    return <span className="pill">-</span>;
                   })();
                   return (
                     <tr key={audioId || idx} className="border-t border-neutral-800 hover:bg-neutral-900/40 cursor-pointer" onClick={()=>navigate(`/audio-details/${audioId}`)}>
                       <td className="py-2 pr-4">{idx}</td>
-                      <td className="py-2 pr-4 text-indigo-400 underline">{r.fileName || r.filename || audioId}</td>
+                      <td className="py-2 pr-4">
+                        {(() => {
+                          const full = String(r.fileName || r.filename || audioId);
+                          const limit = 28;
+                          const short = full.length > limit ? full.slice(0, limit) + '…' : full;
+                          return (
+                            <div
+                              className="max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg text-neutral-800 dark:text-neutral-200 font-body"
+                              title={full}
+                            >
+                              {short}
+                            </div>
+                          );
+                        })()}
+                      </td>
                       <td className="py-2 pr-4">{r.duration || r.fileDuration || '-'}</td>
                       <td className="py-2 pr-4">
                         {(()=>{
                           const src = String(r.uploadSource || '').toLowerCase();
                           if (!src) return '•';
-                          const isUrl = src.includes('url');
-                          const isDoc = src.includes('doc') || src.includes('file');
-                          return isUrl ? <span className="inline-flex items-center gap-1 text-neutral-600 dark:text-neutral-300"><Link2 size={14}/> URL</span> : isDoc ? <span className="inline-flex items-center gap-1 text-neutral-600 dark:text-neutral-300"><FileText size={14}/> Document</span> : <span className="inline-flex items-center gap-1 text-neutral-600 dark:text-neutral-300"><FileText size={14}/> {r.uploadSource}</span>;
+                          const isLink = src.includes('link') || src.includes('url') || src.includes('http');
+                          const isBrowse = src.includes('browse') || src.includes('local') || src.includes('file') || src.includes('doc');
+                          return (
+                            <div className="flex justify-center">
+                              {isLink ? (
+                                <span className="inline-flex items-center text-neutral-600 dark:text-neutral-300" title="Link"><Link2 size={18}/></span>
+                              ) : isBrowse ? (
+                                <span className="inline-flex items-center text-neutral-600 dark:text-neutral-300" title="Browse"><FolderOpen size={18}/></span>
+                              ) : (
+                                <span className="inline-flex items-center text-neutral-600 dark:text-neutral-300" title={String(r.uploadSource || '')}><FileText size={18}/></span>
+                              )}
+                            </div>
+                          );
                         })()}
                       </td>
                       <td className="py-2 pr-4">{execName}</td>
@@ -337,7 +370,7 @@ export default function AudioAnalysisList() {
                             <button
                               onClick={(e)=>{ e.stopPropagation(); handleProcess(audioId); }}
                               disabled={!!busy[audioId]}
-                              className="btn-primary rounded-md px-2 py-1 text-xs disabled:opacity-60"
+                              className="btn-gradient rounded-md px-2 py-1 text-xs disabled:opacity-60"
                             >
                               {busy[audioId] ? '...' : 'Process'}
                             </button>
@@ -346,7 +379,7 @@ export default function AudioAnalysisList() {
                             <button
                               onClick={(e)=>{ e.stopPropagation(); handleReAudit(audioId); }}
                               disabled={!!busy[audioId]}
-                              className="btn-primary rounded-md px-2 py-1 text-xs disabled:opacity-60"
+                              className="btn-gradient rounded-md px-2 py-1 text-xs disabled:opacity-60"
                             >
                               {busy[audioId] ? '...' : 'Re-Audit'}
                             </button>
@@ -375,8 +408,11 @@ export default function AudioAnalysisList() {
       </div>
 
       {showFilters && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-2xl bg-white border border-neutral-200 rounded-xl p-4 dark:bg-neutral-900 dark:border-neutral-800">
+        <div className="fixed inset-0 z-50 bg-black/50" onClick={()=>setShowFilters(false)}>
+          <div
+            className="fixed left-1/2 -translate-x-1/2 top-[12vh] w-[92vw] sm:w-[85vw] md:w-[720px] max-w-[92vw] max-h-[76vh] overflow-y-auto bg-white border border-neutral-200 rounded-xl p-4 dark:bg-neutral-900 dark:border-neutral-800"
+            onClick={(e)=>e.stopPropagation()}
+          >
             <div className="text-lg font-semibold mb-4">Filter Options</div>
             <div className="space-y-4">
               <div>

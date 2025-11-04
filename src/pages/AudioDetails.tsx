@@ -14,6 +14,7 @@ import CustomerIntentTable from '../components/AudioDetails/CustomerIntentTable'
 import QuestionnairePanel from '../components/AudioDetails/QuestionnairePanel';
 import AgentFeedbackPanel from '../components/AudioDetails/AgentFeedbackPanel';
 import KeywordsTable from '../components/AudioDetails/KeywordsTable';
+import { useLoading } from '../context/LoadingContext';
 
  
 
@@ -28,6 +29,7 @@ export default function AudioDetails() {
   const { audioId } = useParams();
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [insights, setInsights] = useState(null);
   const [audioUrl, setAudioUrl] = useState('');
   const [tab, setTab] = useState('Transcription');
@@ -54,7 +56,15 @@ export default function AudioDetails() {
       a.remove();
       setTimeout(()=>URL.revokeObjectURL(url), 1000);
     } catch (e) {
-      try { window.open(audioUrl, '_blank'); } catch {}
+      try {
+        const a = document.createElement('a');
+        const baseName = (insights?.fileName && String(insights.fileName).split('/').pop()) || String(audioId);
+        a.href = audioUrl;
+        a.download = baseName || 'audio';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch {}
     }
   }
 
@@ -63,6 +73,7 @@ export default function AudioDetails() {
     async function load() {
       if (!userId) return;
       try {
+        setGlobalLoading(true);
         const key = detailsKey(userId, audioId);
         const cached = readCache(key);
         if (cached && on){
@@ -218,6 +229,8 @@ export default function AudioDetails() {
       } catch (e) {
         const msg = getErrorMessage(e, 'Failed to load details');
         setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
+      } finally {
+        setGlobalLoading(false);
       }
 
     }
@@ -272,10 +285,10 @@ export default function AudioDetails() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
         <div className="flex items-center gap-2">
-          <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-800 text-neutral-300"><ChevronLeft size={18} /></button>
-          <div className="text-xl font-semibold">Call Details</div>
+          <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-200 text-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-300"><ChevronLeft size={18} /></button>
+          <div className="text-xl font-semibold font-display">Call Details</div>
         </div>
       </div>
 
@@ -292,13 +305,13 @@ export default function AudioDetails() {
       {/* Meta */}
       <MetaDataCard insights={insights} />
 
-      {/* Tabs */}
+      {/* Tabs (neutral container, no ambient glow) */}
       <div className="card p-4">
         <TabsNav tabs={tabs} tab={tab} setTab={setTab} />
 
         {/* Content simple placeholders bound to insights */}
         {tab === 'Transcription' && (
-          <TranscriptionPanel text={insights?.transcription?.raw} />
+          <TranscriptionPanel text={insights?.transcription?.raw} audioRef={audioRef} />
         )}
 
         {tab === 'Sentiment Analysis' && (

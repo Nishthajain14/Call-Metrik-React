@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DashboardAPI, getErrorMessage, isNetworkError } from '../lib/api';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, Area } from 'recharts';
 
-const COLORS = ['#22c55e', '#ef4444', '#60a5fa'];
+const COLORS = ['#34d399', '#f87171', '#8b5cf6'];
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function cacheKey(userId, year, month, view){
@@ -47,18 +47,18 @@ function Info({ text }) {
   );
 }
 
-function Card({ title, value, hint, info }) {
+function Card({ title, value, hint, info, variant = 'metric-purple' }) {
   return (
-    <div className="card p-4 relative">
+    <div className={`metric-subtle ${variant} relative hover-lift`}>
       {info ? (
         <div className="absolute right-3 top-3">
           <Info text={info} />
         </div>
       ) : null}
-      <div className="text-sm muted mb-2">
+      <div className="text-sm muted mb-2 italic">
         {title}
       </div>
-      <div className="text-2xl font-semibold">{value}</div>
+      <div className="text-2xl font-semibold kpi-number">{value}</div>
       {hint ? <div className="text-xs muted mt-1">{hint}</div> : null}
     </div>
   );
@@ -142,14 +142,27 @@ export default function Dashboard() {
   const kpis = useMemo(() => {
     if (!kpi) return [];
     const d = kpi?.data || kpi; // endpoint returns fields at root
+    const variants = ['metric-purple','metric-teal','metric-orange','metric-pink','metric-blue'];
     return [
-      { title: 'Total Duration Analysed', value: number(d?.totalDuration), info: 'The total sum of all analysed audio durations' },
-      { title: 'Avg Duration Of Call', value: number(d?.averageDuration), info: 'The average length of all analysed audio files' },
-      { title: 'Total Calls Analysed', value: number(d?.audioCount), info: 'Total count of Audios Analysed' },
-      { title: 'Avg Executive Score', value: `${number(d?.avgSalesPersonScore ?? d?.avgWeightedScore)}%`, info: 'The average performance score of all conversations, calculated using a predefined question set and a scoring algorithm' },
-      { title: 'Talk : Listen', value: `${number(d?.speechPercentage?.customerAvg)}% / ${number(d?.speechPercentage?.salespersonAvg)}%`, hint: 'Customer / Salesperson', info: 'Talk to listne ratio shows the average share of conversation: how much customer talks versus how much the salesperson does' },
+      { title: 'Total Duration Analysed', value: number(d?.totalDuration), info: 'The total sum of all analysed audio durations', variant: variants[0] },
+      { title: 'Avg Duration Of Call', value: number(d?.averageDuration), info: 'The average length of all analysed audio files', variant: variants[1] },
+      { title: 'Total Calls Analysed', value: number(d?.audioCount), info: 'Total count of Audios Analysed', variant: variants[2] },
+      { title: 'Avg Executive Score', value: `${number(d?.avgSalesPersonScore ?? d?.avgWeightedScore)}%`, info: 'The average performance score of all conversations, calculated using a predefined question set and a scoring algorithm', variant: variants[3] },
+      { title: 'Talk : Listen', value: `${number(d?.speechPercentage?.customerAvg)}% / ${number(d?.speechPercentage?.salespersonAvg)}%`, hint: 'Customer / Salesperson', info: 'Talk to listne ratio shows the average share of conversation: how much customer talks versus how much the salesperson does', variant: variants[4] },
     ];
   }, [kpi]);
+
+  function DatewiseTooltip(props: any){
+    const { active, label, payload } = props || {};
+    if (!active || !payload || !payload.length) return null;
+    const v = Number(payload[0]?.value ?? 0);
+    return (
+      <div style={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)', borderRadius: 8, padding: '8px 10px' }}>
+        <div style={{ color: 'var(--chart-tick)', fontWeight: 600, marginBottom: 4 }}>{String(label)}</div>
+        <div style={{ color: '#7c3aed' }}>count : {v.toLocaleString()}</div>
+      </div>
+    );
+  }
 
   const keywords = useMemo(() => {
     const d = kpi?.data || kpi;
@@ -202,13 +215,13 @@ export default function Dashboard() {
       {error && <div className="border border-red-600 text-red-400 p-3 rounded-lg">{error}</div>}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {kpis.map((k) => (
-          <Card key={k.title} title={k.title} value={k.value} hint={k.hint} info={k.info} />
+          <Card key={k.title} title={k.title} value={k.value} hint={k.hint} info={k.info} variant={k.variant} />
         ))}
       </div>
 
-      <div className="card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold">Datewise Counts</div>
+      <div className="card-elevated p-4 hover-lift ambient">
+        <div className="flex items-center justify-between mb-3 glass surface rounded-lg px-3 py-2">
+          <div className="font-semibold font-display">Datewise Counts</div>
           <div>
             <select
               value={viewRaw}
@@ -224,48 +237,73 @@ export default function Dashboard() {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={datewise} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="dateArea" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8058f7ff" stopOpacity="0.85" />
+                  <stop offset="80%" stopColor="#7a49c9ff" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#53189cff" stopOpacity="0.0" />
+                </linearGradient>
+                <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
               <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
               <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
-              <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} />
-              <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} dot={false} />
+              <Tooltip content={<DatewiseTooltip />} />
+              <Area type="monotone" dataKey="count" stroke="none" fill="url(#dateArea)" isAnimationActive animationDuration={700} />
+              <Line type="monotone" dataKey="count" stroke="#9d45e5ff" strokeOpacity={0.35} strokeWidth={6} dot={false} isAnimationActive animationDuration={700} filter="url(#softGlow)" />
+              <Line type="monotone" dataKey="count" stroke="#9d45e5ff" strokeWidth={2.5} dot={false} isAnimationActive animationDuration={700} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="card p-4 lg:col-span-2">
-          <div className="font-semibold mb-3 flex items-center">
+        <div className="card-elevated p-4 lg:col-span-2 hover-lift">
+          <div className="font-semibold font-display mb-3 flex items-center glass surface rounded-lg px-3 py-2">
             Monthly Sentiment Analysis
             <Info text="Shows monthly sentiment trends based on the analysed audio for each month" />
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={sentMonthlySeries}>
+                <defs />
                 <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
                 <XAxis dataKey="name" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
                 <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} domain={[0, 100]} />
-                <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} />
+                <Tooltip
+                  contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }}
+                  labelStyle={{ color: 'var(--chart-tick)', fontWeight: 600 }}
+                  formatter={(value: any, name: any) => [
+                    typeof value === 'number' ? value.toFixed(2) : value,
+                    String(name)
+                  ]}
+                  labelFormatter={(label: any) => String(label)}
+                />
                 <Legend />
-                <Line type="monotone" dataKey="positive" stroke="#22c55e" dot={false} />
-                <Line type="monotone" dataKey="negative" stroke="#ef4444" dot={false} />
-                <Line type="monotone" dataKey="neutral" stroke="#60a5fa" dot={false} />
+                <Line type="monotone" dataKey="positive" stroke="#22c55e" strokeWidth={2} dot={false} isAnimationActive animationDuration={700} />
+                <Line type="monotone" dataKey="negative" stroke="#ef4444" strokeWidth={2} dot={false} isAnimationActive animationDuration={700} />
+                <Line type="monotone" dataKey="neutral" stroke="#60a5fa" strokeWidth={2} dot={false} isAnimationActive animationDuration={700} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="card p-4">
-          <div className="font-semibold mb-3 flex items-center">
+        <div className="card-elevated p-4 hover-lift">
+          <div className="font-semibold font-display mb-3 flex items-center glass surface rounded-lg px-3 py-2">
             Overall Sentiment of Audios
             <Info text="Displays the percentage breakdown of positive, negative and neutral sentiments across all analysed audios" />
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={donutData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90} label>
+                <Pie data={donutData} dataKey="value" nameKey="name" innerRadius={58} outerRadius={96} paddingAngle={2} cornerRadius={6} stroke="none" style={{ filter: 'drop-shadow(0 6px 18px rgba(0,0,0,0.25))' }}>
                   {donutData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                   ))}
                 </Pie>
                 <Legend />
@@ -275,10 +313,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="card p-4">
-        <div className="font-semibold mb-3">Top Mentioned Keywords</div>
+      <div className="card-elevated p-4 hover-lift">
+        <div className="font-semibold font-display mb-3">Top Mentioned Keywords</div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-glass table-zebra">
             <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Name</th>
@@ -305,10 +343,9 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Local overlay kept minimal to avoid duplication with global loader */}
       {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-neutral-300 border-t-neutral-700 dark:border-neutral-600 dark:border-t-white" />
-        </div>
+        <div className="text-sm muted">Loading dashboard...</div>
       )}
     </div>
   );

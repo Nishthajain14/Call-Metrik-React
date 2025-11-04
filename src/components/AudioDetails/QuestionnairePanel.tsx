@@ -9,46 +9,72 @@ export default function QuestionnairePanel({ groups, openSections, setOpenSectio
         const title = group?.title || group?.name || `Section ${gi + 1}`;
         const items = group?.items || group?.questions || [];
         return (
-          <div key={gi} className="border rounded-lg border-neutral-200 dark:border-neutral-800">
-            <button onClick={() => setOpenSections((s) => ({ ...s, [gi]: !s[gi] }))} className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium bg-neutral-100 rounded-t-lg dark:bg-neutral-900/60">
-              <span>{title}</span>
+          <div key={gi} className="card p-3">
+            <button onClick={() => setOpenSections((s) => ({ ...s, [gi]: !s[gi] }))} className="w-full flex items-center justify-between px-2 py-1.5 rounded-md">
+              <span className="text-sm font-semibold font-display">{title}</span>
               <span className="text-neutral-500 dark:text-neutral-400">{openSections?.[gi] ? '▾' : '▸'}</span>
             </button>
             {openSections?.[gi] && (
-              <div className="p-3 space-y-3">
+              <div className="mt-2 space-y-3">
                 {items.map((q, i) => (
-                  <div key={i} className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
-                    <div>
-                      <div className="text-sm text-neutral-900 dark:text-neutral-100">{q.question || q.title}</div>
-                      {q.citation && <div className="text-xs text-neutral-600 mt-1 dark:text-neutral-400">Citation: {q.citation}</div>}
-                      {typeof q.aiAnswer !== 'undefined' && (
-                        <div className="mt-1 text-xs"><span className="px-2 py-0.5 rounded border border-neutral-300 bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300">AI Answer : {String(q.aiAnswer)}</span></div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-neutral-600 dark:text-neutral-400">Manual Answer:</span>
-                      <select
-                        value={(q.answer ?? q.manualAnswer) === true ? 'true' : ((q.answer ?? q.manualAnswer) === false ? 'false' : '')}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          const boolVal = v === 'true' ? true : v === 'false' ? false : undefined;
-                          setInsights((prev) => {
-                            const next = { ...prev };
-                            const targetGroups = next.questionnaireGroups || [{ title: 'Questionnaire', items: next.questionnaire || [] }];
-                            const tg = targetGroups[gi];
-                            const arr = tg.items || tg.questions || [];
-                            arr[i] = { ...arr[i], answer: boolVal };
-                            if (next.questionnaireGroups) next.questionnaireGroups = [...targetGroups];
-                            else next.questionnaire = [...arr];
-                            return next;
-                          });
-                        }}
-                        className="input rounded-md"
-                      >
-                        <option value="">Select</option>
-                        <option value="true">true</option>
-                        <option value="false">false</option>
-                      </select>
+                  <div key={i} className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="text-sm font-medium font-display text-neutral-900 dark:text-neutral-100"><span className="mr-2 text-neutral-500">Q{String(i + 1)}</span>{q.question || q.title}</div>
+                        {q.citation && (
+                          <div className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+                            <div className="px-3 py-2 rounded-lg border border-neutral-200 bg-neutral-50 dark:bg-neutral-900/60 dark:border-neutral-800">{q.citation}</div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {typeof q.aiAnswer !== 'undefined' && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-700 border border-violet-500/30 dark:text-violet-300">AI Answer: {String(q.aiAnswer)}</span>
+                        )}
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-neutral-600 dark:text-neutral-400">Manual:</span>
+                          <label className="inline-flex items-center gap-1">
+                            <input
+                              type="radio"
+                              name={`q-${gi}-${i}`}
+                              checked={(q.answer ?? q.manualAnswer) === true}
+                              onChange={() => {
+                                setInsights((prev) => {
+                                  const next: any = { ...prev };
+                                  const targetGroups = next.questionnaireGroups || [{ title: 'Questionnaire', items: next.questionnaire || [] }];
+                                  const tg = targetGroups[gi] || { items: [] };
+                                  const arr = tg.items || tg.questions || [];
+                                  arr[i] = { ...(arr[i] || q), answer: true };
+                                  if (next.questionnaireGroups) next.questionnaireGroups = [...targetGroups];
+                                  else next.questionnaire = [...arr];
+                                  return next;
+                                });
+                              }}
+                            />
+                            <span>true</span>
+                          </label>
+                          <label className="inline-flex items-center gap-1">
+                            <input
+                              type="radio"
+                              name={`q-${gi}-${i}`}
+                              checked={(q.answer ?? q.manualAnswer) === false}
+                              onChange={() => {
+                                setInsights((prev) => {
+                                  const next: any = { ...prev };
+                                  const targetGroups = next.questionnaireGroups || [{ title: 'Questionnaire', items: next.questionnaire || [] }];
+                                  const tg = targetGroups[gi] || { items: [] };
+                                  const arr = tg.items || tg.questions || [];
+                                  arr[i] = { ...(arr[i] || q), answer: false };
+                                  if (next.questionnaireGroups) next.questionnaireGroups = [...targetGroups];
+                                  else next.questionnaire = [...arr];
+                                  return next;
+                                });
+                              }}
+                            />
+                            <span>false</span>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -2,7 +2,9 @@ export default function AudioPlayerCard({ audioId, rate, setRate, audioUrl, onDo
   return (
     <div className="card p-4">
       <div className="flex items-center justify-between mb-2">
-        <div className="font-mono text-sm break-all">{audioId}</div>
+        <div className="text-xs text-neutral-600 dark:text-neutral-400 truncate max-w-[60%]" title={String(audioId)}>
+          
+        </div>
         <div className="flex items-center gap-2">
           <div className="hidden sm:block text-xs text-neutral-600 dark:text-neutral-400">Speed</div>
           <div className="inline-flex rounded-md overflow-hidden border border-neutral-300 dark:border-neutral-700">

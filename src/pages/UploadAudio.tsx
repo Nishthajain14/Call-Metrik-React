@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Upload, Link2 } from 'lucide-react';
 import { AudioUploadAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import { useLoading } from '../context/LoadingContext';
 
 
 export default function UploadAudio() {
   const { userId } = useAuth();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [tab, setTab] = useState('file');
   const [files, setFiles] = useState([]);
   const [dragOver, setDragOver] = useState(false);
@@ -60,6 +62,7 @@ export default function UploadAudio() {
     try {
       if (!files.length || !userId) return;
       setLoading(true);
+      setGlobalLoading(true);
       setMessage('');
       setError('');
       const res = await AudioUploadAPI.uploadFile(userId, files);
@@ -70,6 +73,7 @@ export default function UploadAudio() {
       setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   }
 
@@ -77,6 +81,7 @@ export default function UploadAudio() {
     try {
       if (!url.trim() || !userId) return;
       setLoading(true);
+      setGlobalLoading(true);
       setMessage('');
       setError('');
       const res = await AudioUploadAPI.uploadUrl(userId, url.trim());
@@ -87,6 +92,7 @@ export default function UploadAudio() {
       setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   }
 
@@ -95,25 +101,23 @@ export default function UploadAudio() {
       <div className="text-xl font-semibold">Upload Audio</div>
 
       {/* Tabs container looks part of the page */}
-      <div className="rounded-2xl bg-white/60 border border-neutral-200 overflow-hidden dark:bg-neutral-900/50 dark:border-neutral-900">
-        <div className="relative px-4 pt-3 border-b border-neutral-200 dark:border-neutral-800" ref={tabsRef}>
-          <div ref={groupRef} className="relative mx-auto w-full max-w-3xl grid grid-cols-2 items-center justify-items-center">
+      <div className="rounded-2xl glass surface overflow-hidden ambient">
+        <div className="relative px-4 pt-3" ref={tabsRef}>
+          <div ref={groupRef} className="relative mx-auto w-full max-w-3xl grid grid-cols-2 items-center justify-items-center gap-2">
             <button
               ref={fileBtnRef}
-              className={`py-2.5 text-sm flex items-center justify-center gap-2 font-medium ${tab==='file'?'text-neutral-900 dark:text-white':'text-neutral-500 dark:text-neutral-400'}`}
+              className={`tab ${tab==='file' ? 'tab-active' : ''}`}
               onClick={() => setTab('file')}
             >
               <Upload size={16} /> Upload Audio
             </button>
             <button
               ref={urlBtnRef}
-              className={`py-2.5 text-sm flex items-center justify-center gap-2 font-medium ${tab==='url'?'text-neutral-900 dark:text-white':'text-neutral-500 dark:text-neutral-400'}`}
+              className={`tab ${tab==='url' ? 'tab-active' : ''}`}
               onClick={() => setTab('url')}
             >
               <Link2 size={16} /> Upload URL
             </button>
-            {/* active underline segment under group */}
-            <div className="absolute -bottom-[1px] left-0 h-0.5 bg-violet-500 transition-all duration-200" style={{ width: underline.width, transform: `translateX(${underline.left}px)` }} />
           </div>
         </div>
         {/* space under tabs */}
@@ -126,13 +130,13 @@ export default function UploadAudio() {
                 onDragOver={(e)=>{e.preventDefault(); setDragOver(true);}}
                 onDragLeave={()=>setDragOver(false)}
                 onDrop={onDrop}
-                className={`rounded-2xl border ${dragOver? 'border-violet-500 bg-white/60 dark:bg-neutral-900/60':'border-neutral-200 dark:border-neutral-800'} p-6 sm:p-8 flex flex-col items-center gap-4`}
+                className={`rounded-2xl border p-6 sm:p-8 flex flex-col items-center gap-4 transition-colors ambient ${dragOver? 'border-violet-500 bg-neutral-50 dark:bg-neutral-900/60':'border-neutral-200 dark:border-neutral-800'}`}
               >
                 <div className="w-full">
                   <label className="w-full flex items-center justify-between gap-3 border rounded-full px-4 py-2 cursor-pointer hover:border-violet-500 border-neutral-300 dark:border-neutral-700">
                     <span className="text-sm text-neutral-700 dark:text-neutral-300 truncate">{files.length? `${files.length} selected` : 'Choose audio files'}</span>
                     <input type="file" accept="audio/*,.mp3,.wav,.m4a,.aac" className="hidden" multiple onChange={onPick} />
-                    <span className="text-xs bg-neutral-100 border border-neutral-300 rounded-full px-3 py-1 dark:bg-neutral-800 dark:border-neutral-700">Browse</span>
+                    <span className="text-xs btn-outline rounded-full px-3 py-1">Browse</span>
                   </label>
                 </div>
                 {!!files.length && (
@@ -145,7 +149,7 @@ export default function UploadAudio() {
                     ))}
                   </ul>
                 )}
-                <button onClick={onUploadFiles} disabled={!files.length || loading} className="w-full bg-neutral-800 text-white hover:bg-neutral-700 disabled:bg-neutral-200 disabled:text-neutral-500 rounded-md px-4 py-2 text-sm mt-2 dark:bg-neutral-700 dark:hover:bg-neutral-600">
+                <button onClick={onUploadFiles} disabled={!files.length || loading} className="w-full btn-gradient disabled:opacity-60 rounded-md px-4 py-2 text-sm mt-2">
                   {loading? 'Uploading...' : 'Upload'}
                 </button>
               </div>
@@ -154,15 +158,15 @@ export default function UploadAudio() {
         )}
 
         {tab === 'url' && (
-          <div className="p-6">
+          <div className="p-6 ambient rounded-2xl">
             <div className="max-w-2xl mx-auto space-y-4">
               <input
                 value={url}
                 onChange={(e)=> setUrl(e.target.value)}
                 placeholder="https://example.com/audio.mp3"
-                className="w-full input rounded-full focus:ring-2 focus:ring-violet-500"
+                className="w-full input rounded-full focus:ring-2 focus:ring-brand-500"
               />
-              <button onClick={onUploadUrl} disabled={!url.trim() || loading} className="w-full bg-neutral-800 text-white hover:bg-neutral-700 disabled:bg-neutral-200 disabled:text-neutral-500 rounded-md px-4 py-2 text-sm dark:bg-neutral-700 dark:hover:bg-neutral-600">
+              <button onClick={onUploadUrl} disabled={!url.trim() || loading} className="w-full btn-gradient disabled:opacity-60 rounded-md px-4 py-2 text-sm">
                 {loading? 'Submitting...' : 'Upload'}
               </button>
             </div>

@@ -10,7 +10,7 @@ export default function SentimentPanel({ sentiment }) {
           <SentimentChart timeline={sentiment?.timeline} summary={sentiment} series={sentiment?.series} />
         </div>
         <div className="md:col-span-2">
-          <div className="text-sm text-neutral-600 dark:text-neutral-300 mb-2">Sentence-level sentiment</div>
+          <div className="text-sm font-display text-neutral-600 dark:text-neutral-300 mb-2">Sentence-level sentiment</div>
           <div className="max-h-72 overflow-auto space-y-2 pr-1">
             {sentences.length ? sentences.map((s, i) => (
               <div key={i} className={`p-2 rounded-md border bg-neutral-100 dark:bg-neutral-900/40 ${s.label==='POSITIVE' ? 'border-emerald-300 dark:border-emerald-800/60' : s.label==='NEGATIVE' ? 'border-rose-300 dark:border-rose-800/60' : 'border-neutral-200 dark:border-neutral-800'}`}>

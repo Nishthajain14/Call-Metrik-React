@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { AudioAPI, getErrorMessage, isNetworkError } from '../lib/api';
+import { useLoading } from '../context/LoadingContext';
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 function readCache(key){ try{ const raw = sessionStorage.getItem(key); if(!raw) return null; const obj = JSON.parse(raw); if(!obj||!obj.t||Date.now()-obj.t> CACHE_TTL_MS) return null; return obj.v; }catch{ return null; } }
@@ -11,6 +12,7 @@ function keyMonthly(userId, year){ return `monthly:${userId}:${year}`; }
 export default function AudioAnalysisMonthly() {
   const navigate = useNavigate();
   const { userId } = useAuth();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [year, setYear] = useState(new Date().getFullYear());
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +27,7 @@ export default function AudioAnalysisMonthly() {
         const cached = readCache(key);
         if (cached && on){ setRows(cached); setLoading(false); }
         else { setLoading(true); }
+        setGlobalLoading(true);
         const data = await AudioAPI.monthlySummary(userId, year);
         if (!on) return;
         const arr = Array.isArray(data) ? data : data?.data || [];
@@ -35,6 +38,7 @@ export default function AudioAnalysisMonthly() {
         setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
       } finally {
         setLoading(false);
+        setGlobalLoading(false);
       }
     }
     load();
@@ -47,14 +51,14 @@ export default function AudioAnalysisMonthly() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xl font-semibold">Monthwise Audio Analysis</div>
-        <Link to="/upload" className="btn-primary text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
+      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
+        <div className="text-xl font-semibold font-display">Monthwise Audio Analysis</div>
+        <Link to="/upload" className="btn-gradient text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
       </div>
 
-      <div className="card p-4">
+      <div className="card-elevated p-4 hover-lift">
         <div className="flex items-center justify-between mb-3">
-          <div className="font-semibold">Month View of Analysed Audio Files</div>
+          <div className="font-semibold font-display">Month View of Analysed Audio Files</div>
           <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="input rounded-md">
             {Array.from({ length: 5 }).map((_, i) => {
               const y = new Date().getFullYear() - i;
@@ -81,7 +85,7 @@ export default function AudioAnalysisMonthly() {
               ) : rows?.length ? (
                 rows.map((r, i) => (
                   <tr key={i} className="border-t border-neutral-200 hover:bg-neutral-100 dark:border-neutral-800 dark:hover:bg-neutral-900/40 cursor-pointer" onClick={() => navigate(`/audio-analysis/${r.month}?year=${year}`)}>
-                    <td className="py-2 pr-4 text-indigo-400 underline">{months[r.monthIndex ?? (months.indexOf(r.month) >= 0 ? months.indexOf(r.month) : 0)] || r.month}</td>
+                    <td className="py-2 pr-4"><span className="font-medium text-neutral-800 dark:text-neutral-100">{months[r.monthIndex ?? (months.indexOf(r.month) >= 0 ? months.indexOf(r.month) : 0)] || r.month}</span></td>
                     <td className="py-2 pr-4">{r.totalRecords ?? r.TotalRecords ?? '-'}</td>
                     <td className="py-2 pr-4">{r.averageCallDuration ?? '-'}</td>
                     <td className="py-2 pr-4">{r.positivePercentage ?? r.PositivePercentage ?? '-'}</td>

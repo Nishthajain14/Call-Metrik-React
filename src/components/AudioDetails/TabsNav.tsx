@@ -1,8 +1,14 @@
 export default function TabsNav({ tabs, tab, setTab }) {
   return (
-    <div className="flex items-center gap-4 border-b border-neutral-200 mb-3 dark:border-neutral-800">
+    <div className="flex items-center gap-2 glass surface rounded-lg px-2 py-1 mb-3 overflow-x-auto">
       {tabs.map((t) => (
-        <button key={t} onClick={() => setTab(t)} className={`pb-2 text-sm ${tab === t ? 'text-indigo-600 border-b-2 border-indigo-500 dark:text-indigo-400' : 'text-neutral-600 dark:text-neutral-300'}`}>{t}</button>
+        <button
+          key={t}
+          onClick={() => setTab(t)}
+          className={`tab ${tab === t ? 'tab-active' : ''}`}
+        >
+          {t}
+        </button>
       ))}
     </div>
   );
