@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { ReportsAPI, getErrorMessage, isNetworkError } from '../lib/api';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, FunnelChart, Funnel, LabelList } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area, Sankey } from 'recharts';
 import { useLoading } from '../context/LoadingContext';
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -159,6 +159,31 @@ export default function Reports() {
     });
   }, [funnel]);
 
+  const sankeyConv = useMemo(() => {
+    const norm = (s: string) => (s || '').toLowerCase().replace(/[^a-z]/g, '');
+    const getCount = (key: string) => {
+      const item = funnelData.find(d => norm(String(d.stage)) === key);
+      return Number(item?.count ?? 0);
+    };
+    const connected = getCount('connectedcalls');
+    const fresh = getCount('freshcalls');
+    // handle "followup calls" or "follow-up calls"
+    const follow = getCount('followupcalls');
+    const undef = Math.max(0, connected - fresh - follow);
+    const nodes = [
+      { name: `Connected Calls` },
+      { name: `Fresh Calls` },
+      { name: `Follow-up Calls` },
+      { name: `Undefined` },
+    ];
+    const links = [
+      { source: 0, target: 1, value: Math.max(fresh, 0), color: '#22c55e80' },
+      { source: 0, target: 2, value: Math.max(follow, 0), color: '#6366f180' },
+      { source: 0, target: 3, value: Math.max(undef, 0), color: '#9d434380' },
+    ];
+    return { nodes, links, totals: { connected, fresh, follow, undef } };
+  }, [funnelData]);
+
   const [funnelFilter, setFunnelFilter] = useState({ connected: true, fresh: true, followup: true });
   const filteredFunnel = useMemo(() => {
     return funnelData.filter((d) =>
@@ -232,19 +257,19 @@ export default function Reports() {
           <div className="font-semibold font-display mb-3">Peak Call Hours</div>
           <div className={`h-72`}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={peakHoursData}>
+              <AreaChart data={peakHoursData} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="barB" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#22c55e"/>
-                    <stop offset="100%" stopColor="#10b981"/>
+                  <linearGradient id="peakArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.35" />
+                    <stop offset="90%" stopColor="#7c3aed" stopOpacity="0.02" />
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
                 <XAxis dataKey="range" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
                 <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
-                <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ fill: 'transparent' }} />
-                <Bar dataKey="count" fill="url(#barB)" radius={[8, 8, 0, 0]} isAnimationActive animationDuration={900} />
-              </BarChart>
+                <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ stroke: '#7c3aed', strokeDasharray: '4 4' }} />
+                <Area type="monotone" dataKey="count" stroke="#7c3aed" strokeWidth={2} fill="url(#peakArea)" isAnimationActive animationDuration={900} />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -254,60 +279,49 @@ export default function Reports() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="card-elevated p-4 hover-lift">
           <div className="font-semibold font-display mb-3">Call To Lead Conversion Ratio</div>
-          <div className="h-[28rem] flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%" className="max-w-3xl">
-              <FunnelChart margin={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <defs>
-                  <linearGradient id="funnelA" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#f59e0b" />
-                    <stop offset="100%" stopColor="#f97316" />
-                  </linearGradient>
-                  <linearGradient id="funnelB" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#6366f1" />
-                  </linearGradient>
-                  <linearGradient id="funnelC" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#10b981" />
-                    <stop offset="100%" stopColor="#22c55e" />
-                  </linearGradient>
-                </defs>
-                <Tooltip formatter={(v, n, p) => [p?.payload?.count ?? v, `${p?.payload?.stage ?? ''}`]} contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} cursor={{ fill: 'transparent' }} />
-                <Funnel
-                  dataKey="viz"
-                  data={filteredFunnel.map((d) => ({ ...d, fill: d.color }))}
-                  isAnimationActive={false}
-                >
-                  <LabelList position="center" dataKey="count" fill="var(--chart-tick)" />
-                </Funnel>
-              </FunnelChart>
-            </ResponsiveContainer>
+          <div className="h-[28rem]">
+            {sankeyConv.totals.connected ? (
+              <ResponsiveContainer width="100%" height="100%" className="max-w-3xl">
+                <Sankey
+                  data={{
+                    nodes: sankeyConv.nodes,
+                    links: sankeyConv.links
+                  }}
+                  nodeWidth={8}
+                  nodePadding={24}
+                  margin={{ top: 8, right: 40, bottom: 8, left: 40 }}
+                  node={{ fill: 'rgba(123, 55, 241, 0.57)', stroke: 'rgba(123, 55, 241, 0.57)' }}                >
+                  <Tooltip
+                    formatter={(v, n, p) => {
+                      const total = sankeyConv.totals.connected || 0;
+                      const val = Number(p?.payload?.value ?? v) || 0;
+                      const pct = total ? ((val/total)*100).toFixed(2) : '0.00';
+                      const label = p?.payload?.target?.name ?? '';
+                      return [`${val.toLocaleString()} (${pct}%)`, label];
+                    }}
+                    contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }}
+                    cursor={{ fill: 'transparent' }}
+                  />
+                </Sankey>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm muted">No data</div>
+            )}
           </div>
-          <div className="flex items-center gap-6 mt-2">
-            <LegendItem
-              color="#f59e0b"
-              label="Connected Calls"
-              active={funnelFilter.connected}
-              onClick={() => setFunnelFilter((s) => ({ ...s, connected: !s.connected }))}
-            />
-            <LegendItem
-              color="#10b981"
-              label="Fresh Calls"
-              active={funnelFilter.fresh}
-              onClick={() => setFunnelFilter((s) => ({ ...s, fresh: !s.fresh }))}
-            />
-            <LegendItem
-              color="#6366f1"
-              label="Follow-up Calls"
-              active={funnelFilter.followup}
-              onClick={() => setFunnelFilter((s) => ({ ...s, followup: !s.followup }))}
-            />
+          <div className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+            <div>Connected Calls: <span className="font-medium text-neutral-700 dark:text-neutral-300">{sankeyConv.totals.connected?.toLocaleString?.() ?? 0}</span></div>
+            <div className="flex flex-wrap gap-4 mt-1">
+              <span className="inline-flex items-center gap-2"><span style={{ width:10, height:10, borderRadius:9999, background:'#22c55e', display:'inline-block' }} /> Fresh Calls: {sankeyConv.totals.fresh?.toLocaleString?.() ?? 0}</span>
+              <span className="inline-flex items-center gap-2"><span style={{ width:10, height:10, borderRadius:9999, background:'#6366f1', display:'inline-block' }} /> Follow-up Calls: {sankeyConv.totals.follow?.toLocaleString?.() ?? 0}</span>
+              <span className="inline-flex items-center gap-2"><span style={{ width:10, height:10, borderRadius:9999, background:'#9d4343ff', display:'inline-block' }} /> Undefined: {sankeyConv.totals.undef?.toLocaleString?.() ?? 0}</span>
+            </div>
           </div>
         </div>
         {/* Eventwise Agent Performance moved next to funnel */}
         <div className="card-elevated p-4 hover-lift">
           <div className="font-semibold font-display mb-3">Eventwise Agent Performance</div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-zebra">
+          <div className="overflow-x-auto max-h-[48vh] overflow-y-auto rounded-lg">
+            <table className="w-full text-sm table-zebra table-sticky">
               <thead className="text-left text-neutral-600 dark:text-neutral-300">
                 <tr>
                   <th className="py-2 pr-4">Event</th>
@@ -336,8 +350,8 @@ export default function Reports() {
       {/* Agent Script Adherence (placed below funnel/eventwise) */}
       <div className="card-elevated p-4 hover-lift">
         <div className="font-semibold font-display mb-3">Agent Script Adherence</div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm table-glass table-zebra">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-lg">
+          <table className="w-full text-sm table-glass table-zebra table-sticky">
             <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Agent</th>
@@ -467,8 +481,8 @@ export default function Reports() {
         <div className="font-semibold font-display mb-3 flex items-center">
         Agent Performance Report
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-lg">
+          <table className="w-full text-sm table-sticky">
             <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">Agent</th>

@@ -271,8 +271,8 @@ export default function AudioAnalysisList() {
 
       <div className="card-elevated p-4 hover-lift">
         {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm table-glass table-zebra">
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-lg">
+          <table className="w-full text-sm table-glass table-zebra table-sticky">
             <thead className="text-left text-neutral-600 dark:text-neutral-300">
               <tr>
                 <th className="py-2 pr-4">SL No</th>

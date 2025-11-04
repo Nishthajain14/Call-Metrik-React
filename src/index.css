@@ -130,6 +130,64 @@ code {
   .metric-subtle.metric-pink { --ms-from: rgba(236,72,153,.16); }
   .metric-subtle.metric-blue { --ms-from: rgba(96,165,250,.16); }
 
+  /* KPI card consistent size */
+  .kpi-card { min-height: 120px; }
+  @media (max-width: 768px) { .kpi-card { min-height: 148px; } }
+
+  /* Wrapper-based KPI layout (icon overlays card from above) */
+  .kpi-wrapper { position: relative; margin-top: 40px; }
+  .kpi-wrapper .kpi-card { margin-top: 40px; padding: 14px 14px; padding-top: 30px; padding-bottom: 10px; overflow: hidden; }
+  .kpi-icon { position: absolute; top: -25px; left: 20px; z-index: 10; width: 90px; height: 90px; filter: drop-shadow(0 12px 22px rgba(2,6,23,0.28)); transform: rotate(-15deg); }
+  .kpi-info { position: absolute; top: 10px; right: 10px; z-index: 11; }
+  .watermark-icon { position: absolute; right: 10px; top: 28px; width: 70px; height: 70px; opacity: 0.1; z-index: 1; pointer-events: none; filter: blur(0.2px); transform: rotate(-8deg) scale(1.0); transform-origin: top right; }
+
+  /* Text format: title then value with minimal spacing */
+  .text-content .title { font-size: 12px; line-height: 1.2; margin: 0; color: #a3a3a3; font-style: italic; }
+  .text-content .value { font-size: 22px; font-weight: 700; line-height: 1.2; margin: 0; color: #fff; letter-spacing: -0.2px; }
+  @media (max-width: 768px) { .text-content .value { font-size: 20px; } }
+
+  /* KPI art: floating 3D icon inside cards (overlay) */
+  .kpi-art { position: absolute; left: 15px; top: -20px; opacity: .98; transform: translateZ(0); z-index: 10; }
+  .kpi-art svg { display: block; filter: drop-shadow(0 10px 18px rgba(2,6,23,0.25)); }
+  .kpi-art img { display:block; width:60px; height:60px; filter: drop-shadow(0 12px 22px rgba(2,6,23,0.28)); }
+  .metric-subtle .kpi-content { padding-top: 50px; padding-right: 12px; }
+  @media (max-width: 768px) { .metric-subtle .kpi-content { padding-top: 46px; } .kpi-art img{ width:54px; height:54px; } }
+  /* tighter vertical rhythm between title/value/hint */
+  .metric-subtle .kpi-number { margin-top: 4px; line-height: 1.2; }
+
+  /* Faint watermark of the same icon inside card */
+  .kpi-watermark { position:absolute; right: 10px; top: 24px; opacity: .10; z-index: 1; filter: blur(0.3px); pointer-events: none; }
+  .kpi-watermark img { display:block; width:120px; height:auto; transform: rotate(-8deg) scale(1.1); transform-origin: top right; }
+  /* remove white pedestal glow; keep only subtle top ambient */
+  .metric-subtle::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .metric-subtle::before { background:
+      radial-gradient(380px 220px at 50% 0%, var(--ms-from, rgba(99,102,241,.20)), transparent 55%),
+      radial-gradient(220px 160px at 14% 2%, color-mix(in oklab, var(--ms-from, rgba(124,58,237,.28)) 85%, transparent), transparent 70%);
+  }
+
+  /* KPI burst + glaze layers (colored, no white shadows) */
+  .kpi-burst { position:absolute; left: clamp(-10px, 6%, 14%); top: -6px; width: 160px; height: 140px; pointer-events:none; mix-blend-mode: screen; opacity: .5; }
+  .kpi-burst::before { content:""; position:absolute; inset:0; background:
+    radial-gradient(closest-side, color-mix(in oklab, var(--ms-from, rgba(124,58,237,.35)) 70%, transparent), transparent 60%),
+    radial-gradient(closest-side, rgba(124,58,237,.35), transparent 70%);
+    filter: blur(10px); border-radius: 50%; }
+  .kpi-glaze { position:absolute; left: 10px; right: 10px; top: 0; height: 46%; pointer-events:none; border-radius: 14px; overflow:hidden; }
+  .kpi-glaze::before { content:""; position:absolute; inset:0; background: linear-gradient(180deg, color-mix(in oklab, var(--ms-from, rgba(124,58,237,.25)) 60%, transparent), rgba(0,0,0,0)); opacity:.6; filter: blur(.2px); }
+
+  /* Overlay grid that sits above the card grid */
+  .kpi-layer { z-index: 5; }
+  .ov-cell { position: relative; }
+  .ov-art { position:absolute; left: clamp(8px, 14%, 20%); top: -2px; }
+  .ov-art img { display:block; height:auto; width:auto; max-width:96px; max-height:96px; filter: drop-shadow(0 10px 18px rgba(2,6,23,0.25)); }
+  @media (max-width: 768px) { .ov-art img{ max-width:84px; max-height:84px; } }
+  .ov-burst { position:absolute; left: clamp(-10px, 6%, 14%); top: -6px; width: 160px; height: 140px; pointer-events:none; mix-blend-mode: screen; opacity: .5; }
+  .ov-burst::before { content:""; position:absolute; inset:0; background:
+    radial-gradient(closest-side, color-mix(in oklab, var(--ms-from, rgba(124,58,237,.35)) 70%, transparent), transparent 60%),
+    radial-gradient(closest-side, rgba(124,58,237,.35), transparent 70%);
+    filter: blur(10px); border-radius: 50%; }
+  .ov-glaze { position:absolute; left: 10px; right: 10px; top: 0; height: 46%; pointer-events:none; border-radius: 14px; overflow:hidden; }
+  .ov-glaze::before { content:""; position:absolute; inset:0; background: linear-gradient(180deg, color-mix(in oklab, var(--ms-from, rgba(124,58,237,.25)) 60%, transparent), rgba(0,0,0,0)); opacity:.6; filter: blur(.2px); }
+
   /* Tiny corner accent for neutral cards (use on chart/table wrappers) */
   .accent-corner { position: relative; overflow: hidden; }
   .accent-corner::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: radial-gradient(260px 160px at 6% 8%, rgba(99,102,241,.08), transparent 65%); }
@@ -204,5 +262,18 @@ code {
   .dark .table-glass thead { background: linear-gradient(180deg, rgba(17,24,39,.60), rgba(17,24,39,.30)); }
   .table-glass tbody td { border-top: 1px solid rgba(0,0,0,.05); }
   .dark .table-glass tbody td { border-top: 1px solid rgba(255,255,255,.05); }
+  /* Sticky table header for long lists */
+  .table-sticky thead { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(6px); }
+  .table-sticky thead th { position: relative; }
+  .table-sticky thead::after { content: ""; position: sticky; top: 0; display: block; height: 1px; width: 100%; background: rgba(0,0,0,.06); }
+  .dark .table-sticky thead::after { background: rgba(255,255,255,.06); }
+
+  /* Segmented control */
+  .segmented { display: inline-flex; padding: 4px; border-radius: 12px; background: rgba(255,255,255,0.60); box-shadow: inset 0 0 0 1px rgba(124,58,237,0.12); }
+  .dark .segmented { background: rgba(17,24,39,0.60); }
+  .segmented button { font-size: 12px; line-height: 1; padding: 6px 10px; border-radius: 10px; color: #52525b; transition: all .15s ease; }
+  .dark .segmented button { color: #d1d5db; }
+  .segmented button.active { color: #fff; background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%); box-shadow: 0 6px 20px rgba(124,58,237,.25); }
+  .segmented button:not(.active):hover { background: rgba(124,58,237,0.08); }
 }
 
