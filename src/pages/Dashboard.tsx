@@ -1,18 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { TrendingUp, PieChart as PieIcon, Hash } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DashboardAPI, getErrorMessage, isNetworkError } from '../lib/api';
-import { ResponsiveContainer, CartesianGrid, Tooltip, Legend, XAxis, YAxis } from 'recharts';
-import { LineChart, Line } from 'recharts';
-import { AreaChart, Area } from 'recharts';
-import { PieChart, Pie, Cell } from 'recharts';
-import { ScatterChart, Scatter, ZAxis } from 'recharts';
-import ratio3d from '../assets/ratio3d.png';
-import avgscore3d from '../assets/avgscore3d.png';
-import totalcall3d from '../assets/totalcall3d.png';
-import avgduration3d from '../assets/avgduration3d.png';
-import totalduration3d from '../assets/totalduration3d.png';
-const COLORS = ['#34d399', '#f87171', '#8b5cf6'];
+import KPICardGrid from '../components/Dashboard/KPICardGrid';
+import DatewiseCountsCard from '../components/Dashboard/DatewiseCountsCard';
+import MonthlySentimentCard from '../components/Dashboard/MonthlySentimentCard';
+import OverallSentimentCard from '../components/Dashboard/OverallSentimentCard';
+import TopKeywordsCard from '../components/Dashboard/TopKeywordsCard';
+
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function cacheKey(userId, year, month, view){
@@ -43,52 +37,6 @@ function number(x) {
   if (x == null) return '-';
   if (typeof x === 'string' && /\d+:\d{2}:\d{2}/.test(x)) return x; // already formatted duration
   return new Intl.NumberFormat('en-IN').format(Number(x));
-}
-
-function Info({ text }) {
-  return (
-    <span
-      className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] border-neutral-300 text-neutral-600 hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:text-white"
-      title={text}
-    >
-      i
-    </span>
-  );
-}
-
-function Art({ kind, className }: { kind?: string; className?: string }) {
-  if (!kind) return null;
-  const MAP: Record<string, string> = {
-    ratio: ratio3d,
-    score: avgscore3d,
-    calls: totalcall3d,
-    stopwatch: avgduration3d,
-    hourglass: totalduration3d,
-  };
-  const src = MAP[kind] || MAP.stopwatch;
-  return <img src={src} alt="" className={className} loading="lazy" />;
-}
-
-function Card({ title, value, hint, info, variant = 'metric-purple', art }: { title: any; value: any; hint?: any; info?: any; variant?: string; art?: string }) {
-  return (
-    <div className={`metric-subtle kpi-card ${variant} relative hover-lift`}>
-      {info ? (
-        <div className="kpi-info absolute right-3 top-3 z-[11]">
-          <Info text={info} />
-        </div>
-      ) : null}
-      {art ? (
-        <div className="kpi-inner-overlays" aria-hidden>
-          <Art kind={art} className="watermark-icon" />
-        </div>
-      ) : null}
-      <div className="text-content">
-        <div className="title">{title}</div>
-        <div className="value kpi-number">{value}</div>
-        {hint ? <div className="text-xs muted mt-1">{hint}</div> : null}
-      </div>
-    </div>
-  );
 }
 
 export default function Dashboard() {
@@ -178,18 +126,6 @@ export default function Dashboard() {
       { title: 'Talk : Listen', value: `${number(d?.speechPercentage?.customerAvg)}% / ${number(d?.speechPercentage?.salespersonAvg)}%`, hint: 'Customer / Salesperson', info: 'Talk to listne ratio shows the average share of conversation: how much customer talks versus how much the salesperson does', variant: variants[4], art: 'ratio' },
     ];
   }, [kpi]);
-
-  function DatewiseTooltip(props: any){
-    const { active, label, payload } = props || {};
-    if (!active || !payload || !payload.length) return null;
-    const v = Number(payload[0]?.value ?? 0);
-    return (
-      <div style={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)', borderRadius: 8, padding: '8px 10px' }}>
-        <div style={{ color: 'var(--chart-tick)', fontWeight: 600, marginBottom: 4 }}>{String(label)}</div>
-        <div style={{ color: '#7c3aed' }}>count : {v.toLocaleString()}</div>
-      </div>
-    );
-  }
 
   const keywords = useMemo(() => {
     const d = kpi?.data || kpi;
@@ -291,187 +227,16 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        {kpis.map((k) => (
-          <div key={k.title} className="kpi-wrapper">
-            <Art kind={k.art} className="kpi-icon" />
-            <Card title={k.title} value={k.value} hint={k.hint} info={k.info} variant={k.variant} art={k.art} />
-          </div>
-        ))}
-      </div>
+      <KPICardGrid kpis={kpis} />
 
-      <div className="card-elevated p-4 hover-lift ambient">
-        <div className="flex items-center justify-between mb-3 glass surface rounded-lg px-3 py-2">
-          <div className="font-semibold font-display inline-flex items-center gap-2"><TrendingUp size={16} /> Datewise Counts</div>
-          <div className="segmented">
-            {(['Monthly','Weekly','Daily'] as const).map((v)=> (
-              <button key={v} className={viewRaw===v? 'active' : ''} onClick={()=> setViewRaw(v)}>{v}</button>
-            ))}
-          </div>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={datewise} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
-              <defs>
-                <linearGradient id="dateArea" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#8058f7ff" stopOpacity="0.85" />
-                  <stop offset="80%" stopColor="#7a49c9ff" stopOpacity="0.28" />
-                  <stop offset="100%" stopColor="#53189cff" stopOpacity="0.0" />
-                </linearGradient>
-                <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-              <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
-              <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
-              <Tooltip content={<DatewiseTooltip />} />
-              <Area type="monotone" dataKey="count" stroke="none" fill="url(#dateArea)" isAnimationActive animationDuration={700} />
-              <Line type="monotone" dataKey="count" stroke="#9d45e5ff" strokeOpacity={0.35} strokeWidth={6} dot={false} isAnimationActive animationDuration={700} filter="url(#softGlow)" />
-              <Line type="monotone" dataKey="count" stroke="#9d45e5ff" strokeWidth={2.5} dot={false} isAnimationActive animationDuration={700} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      <DatewiseCountsCard data={datewise} viewRaw={viewRaw} setViewRaw={setViewRaw} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="card-elevated p-4 lg:col-span-2 hover-lift">
-          <div className="font-semibold font-display mb-3 flex items-center glass surface rounded-lg px-3 py-2">
-            <span className="inline-flex items-center gap-2"><TrendingUp size={16} /> Monthly Sentiment Analysis</span>
-            <Info text="Shows monthly sentiment trends based on the analysed audio for each month" />
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={sentMonthlySeries} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gPos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#22c55e" stopOpacity={0.35} />
-                    <stop offset="90%" stopColor="#22c55e" stopOpacity={0.02} />
-                  </linearGradient>
-                  <linearGradient id="gNeg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.3} />
-                    <stop offset="90%" stopColor="#ef4444" stopOpacity={0.02} />
-                  </linearGradient>
-                  <linearGradient id="gNeu" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#60a5fa" stopOpacity={0.3} />
-                    <stop offset="90%" stopColor="#60a5fa" stopOpacity={0.02} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
-                <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} domain={[0, 100]} />
-                <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} />
-                <Legend />
-                <Area type="monotone" dataKey="positive" stroke="#22c55e" fill="url(#gPos)" isAnimationActive animationDuration={700} />
-                <Area type="monotone" dataKey="neutral" stroke="#60a5fa" fill="url(#gNeu)" isAnimationActive animationDuration={700} />
-                <Area type="monotone" dataKey="negative" stroke="#ef4444" fill="url(#gNeg)" isAnimationActive animationDuration={700} />
-                </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="card-elevated p-4 hover-lift">
-          <div className="font-semibold font-display mb-3 flex items-center glass surface rounded-lg px-3 py-2">
-            <span className="inline-flex items-center gap-2"><PieIcon size={16} /> Overall Sentiment</span>
-            <Info text="Positive vs Neutral vs Negative sentiment split" />
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
-                <defs>
-                  <filter id="bubbleShadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="rgba(0,0,0,0.25)" />
-                  </filter>
-                </defs>
-                <XAxis type="number" dataKey="x" hide domain={[0, 100]} />
-                <YAxis type="number" dataKey="y" hide domain={[0, 100]} />
-                <ZAxis type="number" dataKey="z" range={[30, 110]} />
-                {/* Legend rendered below */}
-                {
-                  (() => {
-                    const data = donutData || [];
-                    const pos = data.find(d => d.name === 'Positive')?.value ?? 0;
-                    const neg = data.find(d => d.name === 'Negative')?.value ?? 0;
-                    const neu = data.find(d => d.name === 'Neutral')?.value ?? 0;
-                    const base = [
-                      { name: 'Positive', value: pos, fill: '#22c55e' },
-                      { name: 'Neutral', value: neu, fill: '#60a5fa' },
-                      { name: 'Negative', value: neg, fill: '#ef4444' },
-                    ].sort((a,b)=> (b.value||0) - (a.value||0));
-                    // Largest centered, others overlay with slight offsets based on their rank
-                    const centers = [
-                      { x: 50, y: 50 },      // largest
-                      { x: 63, y: 42 },      // second
-                      { x: 57, y: 64 },      // third
-                    ];
-                    // map value -> radius (perceptual sqrt scaling) as fallback if node.radius absent
-                    const toRadius = (v:number) => {
-                      const t = Math.max(0, Math.min(1, v/100));
-                      return 18 + 42 * Math.sqrt(t); // 18..60
-                    };
-                    const bubbles = base.map((b, i) => ({
-                      name: b.name,
-                      x: centers[i]?.x ?? 50 + i * 4,
-                      y: centers[i]?.y ?? 50 + i * 4,
-                      z: b.value,
-                      value: b.value,
-                      r: toRadius(b.value || 0),
-                      fill: b.fill,
-                    }));
-                    return (
-                      <Scatter data={bubbles} shape={(props: any) => {
-                        const { cx, cy, fill, node } = props as any;
-                        const r = (node && node.radius) ? node.radius : (props?.payload?.r ?? 24);
-                        return (
-                          <g filter="url(#bubbleShadow)">
-                            <circle cx={cx} cy={cy} r={r} fill={fill} opacity={0.9} stroke="rgba(255,255,255,0.25)" strokeWidth={2} />
-                            <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={Math.max(12, r * 0.42)} fill="#ffffff">
-                              {`${Math.round((props?.payload?.value ?? 0))}%`}
-                            </text>
-                          </g>
-                        );
-                      }} />
-                    );
-                  })()
-                }
-              </ScatterChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        <MonthlySentimentCard data={sentMonthlySeries} />
+        <OverallSentimentCard donutData={donutData} />
       </div>
 
-      <div className="card-elevated p-4 hover-lift">
-        <div className="font-semibold font-display mb-3 inline-flex items-center gap-2"><Hash size={16} /> Top Mentioned Keywords</div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm table-glass table-zebra table-sticky">
-            <thead className="text-left text-neutral-600 dark:text-neutral-300">
-              <tr>
-                <th className="py-2 pr-4">Name</th>
-                <th className="py-2 pr-4">Weightage (%)</th>
-                <th className="py-2 pr-4">Occurrence in Conversation (%)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.isArray(keywords) && keywords.length > 0 ? (
-                keywords.map((k, i) => (
-                  <tr key={i} className="border-t border-neutral-200 dark:border-neutral-800">
-                    <td className="py-2 pr-4">{k.name}</td>
-                    <td className="py-2 pr-4">{number(k.avgTranscriptWeightage)}</td>
-                    <td className="py-2 pr-4">{number(k.avgTranscriptPercentage)}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className="py-3 text-neutral-500 dark:text-neutral-400" colSpan={3}>No keywords available</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <TopKeywordsCard keywords={keywords} formatNumber={number} />
 
       {/* Local overlay kept minimal; skeletons shown above */}
     </div>
