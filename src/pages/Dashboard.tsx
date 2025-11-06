@@ -1,33 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { DashboardAPI, getErrorMessage, isNetworkError } from '../lib/api';
+import { useLoading } from '../context/LoadingContext';
 import KPICardGrid from '../components/Dashboard/KPICardGrid';
 import DatewiseCountsCard from '../components/Dashboard/DatewiseCountsCard';
 import MonthlySentimentCard from '../components/Dashboard/MonthlySentimentCard';
 import OverallSentimentCard from '../components/Dashboard/OverallSentimentCard';
 import TopKeywordsCard from '../components/Dashboard/TopKeywordsCard';
-
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-function cacheKey(userId, year, month, view){
-  return `dashboard:${userId}:${year}:${month}:${view}`;
-}
-
-function readCache(key){
-  try{
-    const raw = sessionStorage.getItem(key);
-    if (!raw) return null;
-    const obj = JSON.parse(raw);
-    if (!obj || !obj.t || Date.now() - obj.t > CACHE_TTL_MS) return null;
-    return obj.v;
-  }catch{ return null; }
-}
-
-function writeCache(key, value){
-  try{
-    sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value }));
-  }catch{}
-}
+import useDashboardData from '../hooks/useDashboardData';
 
 function monthName(date = new Date()) {
   return date.toLocaleString('en-US', { month: 'long' });
@@ -41,78 +20,8 @@ function number(x) {
 
 export default function Dashboard() {
   const { userId } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const [kpi, setKpi] = useState(null);
-  const [counts, setCounts] = useState<any>([]);
-  const [sentimentMonthly, setSentimentMonthly] = useState(null);
-
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = monthName(now);
-  const [viewRaw, setViewRaw] = useState(()=>{
-    try{ return sessionStorage.getItem('dashboard:view') || 'Monthly'; }catch{ return 'Monthly'; }
-  });
-  const [view, setView] = useState(viewRaw);
-
-  useEffect(() => {
-    if (!userId) return; // wait for auth mapping
-    let mounted = true;
-    const key = cacheKey(userId, year, month, view);
-
-    // 1) Fast-hydrate from cache if available
-    const cached = readCache(key);
-    if (cached && mounted){
-      setKpi(cached.kpi);
-      setCounts(cached.counts);
-      setSentimentMonthly(cached.sentimentMonthly);
-      setLoading(false);
-    }
-
-    async function fetchAll() {
-      try {
-        if (!cached) setLoading(true);
-        const [kpiRes, countsRes, sentRes] = await Promise.all([
-          DashboardAPI.audioKPI(userId),
-          view === 'Monthly'
-            ? DashboardAPI.monthwiseCounts(userId, year)
-            : view === 'Weekly'
-            ? DashboardAPI.weekwiseCounts(userId, month, year)
-            : DashboardAPI.datewiseCounts(userId, month, year),
-          DashboardAPI.sentimentMonthly(userId, year),
-        ]);
-        if (!mounted) return;
-        setKpi(kpiRes);
-        setCounts(Array.isArray(countsRes?.data) ? countsRes.data : countsRes);
-        setSentimentMonthly(sentRes);
-        // persist
-        writeCache(key, {
-          kpi: kpiRes,
-          counts: Array.isArray(countsRes?.data) ? countsRes.data : countsRes,
-          sentimentMonthly: sentRes,
-        });
-      } catch (e) {
-        const msg = getErrorMessage(e, 'Failed to load dashboard');
-        setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchAll();
-    return () => {
-      mounted = false;
-    };
-  }, [month, year, view, userId]);
-
-  useEffect(()=>{
-    const t = setTimeout(()=> setView(viewRaw), 300);
-    return ()=> clearTimeout(t);
-  }, [viewRaw]);
-
-  useEffect(()=>{
-    try{ sessionStorage.setItem('dashboard:view', view); }catch{}
-  }, [view]);
+  const { loading, error, kpi, counts, sentimentMonthly, datewise, view, setViewRaw, viewRaw } = useDashboardData(userId);
+  const { setLoading: setGlobalLoading } = useLoading();
 
   const kpis = useMemo(() => {
     if (!kpi) return [];
@@ -133,22 +42,7 @@ export default function Dashboard() {
     return Array.isArray(metrics) ? metrics : [];
   }, [kpi]);
 
-  const datewise = useMemo(() => {
-    const payload = counts?.data ?? counts;
-    // Weekly endpoint returns an object like { Monday: 216, ... }
-    if (view === 'Weekly' && payload && !Array.isArray(payload) && typeof payload === 'object') {
-      return Object.entries(payload).map(([k, v]) => ({ date: k, count: Number(v) || 0 }));
-    }
-    const arr = Array.isArray(payload) ? payload : [];
-    if (!Array.isArray(arr)) return [];
-    if (view === 'Monthly') {
-      return arr.map((x) => ({ date: x.month || x.name, count: x.totalRecords ?? x.count ?? 0 }));
-    }
-    if (view === 'Weekly') {
-      return arr.map((x) => ({ date: x.week || x.name || x[0] || Object.keys(x)[0], count: x.totalRecords ?? x.count ?? x[Object.keys(x)[0]] ?? 0 }));
-    }
-    return arr.map((x) => ({ date: x.date || x.Day || x.day, count: x.totalRecords ?? x.count ?? x.n ?? 0 }));
-  }, [counts, view]);
+  // datewise comes from hook
 
   const sentMonthlySeries = useMemo(() => {
     const d = sentimentMonthly?.data || sentimentMonthly;
@@ -200,33 +94,11 @@ export default function Dashboard() {
     return { nodes, links };
   }, [kpi]);
 
+  useEffect(() => { setGlobalLoading(loading); }, [loading, setGlobalLoading]);
+
   return (
     <div className="space-y-6">
       {error && <div className="border border-red-600 text-red-400 p-3 rounded-lg">{error}</div>}
-
-      {loading && (
-        <div className="space-y-6 animate-pulse">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="card-elevated p-4">
-                <div className="h-3 w-24 mb-3 bg-neutral-200 rounded dark:bg-neutral-800" />
-                <div className="h-6 w-32 bg-neutral-200 rounded dark:bg-neutral-800" />
-                <div className="h-3 w-20 mt-2 bg-neutral-200 rounded dark:bg-neutral-800" />
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="card-elevated p-4 lg:col-span-2">
-              <div className="h-6 w-48 mb-3 bg-neutral-200 rounded dark:bg-neutral-800" />
-              <div className="h-72 w-full bg-neutral-200 rounded dark:bg-neutral-800" />
-            </div>
-            <div className="card-elevated p-4">
-              <div className="h-6 w-56 mb-3 bg-neutral-200 rounded dark:bg-neutral-800" />
-              <div className="h-72 w-full bg-neutral-200 rounded dark:bg-neutral-800" />
-            </div>
-          </div>
-        </div>
-      )}
       <KPICardGrid kpis={kpis} />
 
       <DatewiseCountsCard data={datewise} viewRaw={viewRaw} setViewRaw={setViewRaw} />
@@ -238,7 +110,7 @@ export default function Dashboard() {
 
       <TopKeywordsCard keywords={keywords} formatNumber={number} />
 
-      {/* Local overlay kept minimal; skeletons shown above */}
+      {loading && <div className="text-sm muted">Loading dashboard...</div>}
     </div>
   );
 }

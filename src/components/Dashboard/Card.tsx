@@ -2,7 +2,20 @@ import React from 'react';
 import Info from './Info';
 import Art from './Art';
 
-export default function Card({ title, value, hint, info, variant = 'metric-purple', art }: { title: any; value: any; hint?: any; info?: any; variant?: string; art?: string }) {
+type Props = {
+  title: any;
+  value: any;
+  hint?: any;
+  info?: any;
+  variant?: string;
+  art?: string;
+  subtitle?: any;
+  lastValue?: any;
+};
+
+export default function Card({ title, value, hint, info, variant = 'metric-purple', art, subtitle, lastValue }: Props) {
+  const bothNums = typeof value === 'number' && typeof lastValue === 'number';
+  const up = bothNums ? Number(value) >= Number(lastValue) : null;
   return (
     <div className={`metric-subtle kpi-card ${variant} relative hover-lift`}>
       {info ? (
@@ -17,8 +30,17 @@ export default function Card({ title, value, hint, info, variant = 'metric-purpl
       ) : null}
       <div className="text-content">
         <div className="title">{title}</div>
-        <div className="value kpi-number">{value}</div>
-        {hint ? <div className="text-xs muted mt-1">{hint}</div> : null}
+        <div className="value kpi-number flex items-center gap-2">
+          <span>{typeof value === 'number' ? value.toLocaleString() : value}</span>
+          {up !== null && <span className={up ? 'text-emerald-500' : 'text-rose-500'}>{up ? '▲' : '▼'}</span>}
+        </div>
+        {subtitle ? (
+          <div className="text-xs muted mt-1">
+            {subtitle} : <span className="font-medium">{typeof lastValue === 'number' ? lastValue.toLocaleString() : lastValue}</span>
+          </div>
+        ) : hint ? (
+          <div className="text-xs muted mt-1">{hint}</div>
+        ) : null}
       </div>
     </div>
   );

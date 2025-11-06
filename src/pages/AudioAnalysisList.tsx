@@ -271,9 +271,9 @@ export default function AudioAnalysisList() {
 
       <div className="card-elevated p-4 hover-lift">
         {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
-        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-lg">
-          <table className="w-full text-sm table-glass table-zebra table-sticky">
-            <thead className="text-left text-neutral-600 dark:text-neutral-300">
+         <div className="overflow-x-auto rounded-lg">
+          <table className="w-full text-sm table-zebra table-sticky no-row-borders">
+            <thead className="text-left text-neutral-600 dark:text-neutral-300" style={{ backdropFilter: 'none', background: 'transparent' }}>
               <tr>
                 <th className="py-2 pr-4">SL No</th>
                 <th className="py-2 pr-4 cursor-pointer select-none" onClick={()=>handleSort('fileName')}>File Name {sortKey==='fileName' ? (sortDir==='asc' ? '▲':'▼') : '↕'}</th>
@@ -408,7 +408,7 @@ export default function AudioAnalysisList() {
       </div>
 
       {showFilters && (
-        <div className="fixed inset-0 z-50 bg-black/50" onClick={()=>setShowFilters(false)}>
+        <div className="fixed inset-0 z-50 backdrop-blur-sm" onClick={()=>setShowFilters(false)}>
           <div
             className="fixed left-1/2 -translate-x-1/2 top-[12vh] w-[92vw] sm:w-[85vw] md:w-[720px] max-w-[92vw] max-h-[76vh] overflow-y-auto bg-white border border-neutral-200 rounded-xl p-4 dark:bg-neutral-900 dark:border-neutral-800"
             onClick={(e)=>e.stopPropagation()}

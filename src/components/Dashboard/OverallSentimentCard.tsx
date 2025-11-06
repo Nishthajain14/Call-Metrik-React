@@ -21,36 +21,69 @@ export default function OverallSentimentCard({ donutData }: { donutData: { name:
             </defs>
             <XAxis type="number" dataKey="x" hide domain={[0, 100]} />
             <YAxis type="number" dataKey="y" hide domain={[0, 100]} />
-            <ZAxis type="number" dataKey="z" range={[30, 110]} />
+            <ZAxis type="number" dataKey="z" range={[40, 140]} />
             {
               (() => {
                 const data = donutData || [];
                 const pos = data.find(d => d.name === 'Positive')?.value ?? 0;
                 const neg = data.find(d => d.name === 'Negative')?.value ?? 0;
                 const neu = data.find(d => d.name === 'Neutral')?.value ?? 0;
-                const base = [
+                const items = [
                   { name: 'Positive', value: pos, fill: '#22c55e' },
                   { name: 'Neutral', value: neu, fill: '#60a5fa' },
                   { name: 'Negative', value: neg, fill: '#ef4444' },
-                ].sort((a,b)=> (b.value||0) - (a.value||0));
-                const centers = [
-                  { x: 50, y: 50 },
-                  { x: 63, y: 42 },
-                  { x: 57, y: 64 },
                 ];
-                const toRadius = (v:number) => {
-                  const t = Math.max(0, Math.min(1, v/100));
-                  return 18 + 42 * Math.sqrt(t);
+
+                // Radius in px based on percentage with sqrt scaling for perceptual balance
+                const rMin = 26; // px
+                const rMax = 84; // px (fits within h-72 with padding)
+                const radiusFromPct = (v:number) => {
+                  const t = Math.max(0, Math.min(1, (v||0)/100));
+                  return rMin + (rMax - rMin) * Math.sqrt(t);
                 };
-                const bubbles = base.map((b, i) => ({
-                  name: b.name,
-                  x: centers[i]?.x ?? 50 + i * 4,
-                  y: centers[i]?.y ?? 50 + i * 4,
-                  z: b.value,
-                  value: b.value,
-                  r: toRadius(b.value || 0),
-                  fill: b.fill,
-                }));
+
+                const scale = 0.92; // slight shrink for consistent edge padding
+                const withR = items.map((it) => ({ ...it, r: radiusFromPct(it.value||0) * scale }));
+                // Determine main (largest) bubble
+                const main = withR.slice().sort((a,b)=> (b.value||0) - (a.value||0))[0];
+                const others = withR.filter((it)=> it.name !== main.name);
+
+                // Convert px displacement to chart percent (approx) so it scales responsively.
+                // ResponsiveContainer height ~ 288px (h-72). 1% ~ 2.88px ≈ 3px for simplicity.
+                const pxToPct = (px:number) => px / 3;
+
+                // Center largest; place others around it using polar offsets for a natural overlap.
+                const c0 = { x: 46, y: 55 };
+                const placeAround = (radiusMain:number, radiusChild:number, angleDeg:number, tightness:number, overlapFactor:number = 0.35) => {
+                  const angle = (Math.PI/180) * angleDeg;
+                  // Allow a small controlled overlap based on child radius (clean aesthetic)
+                  const overlap = Math.max(6, Math.min(22, radiusChild * overlapFactor)); // px
+                  const d = Math.max(radiusMain + radiusChild - overlap, radiusMain * tightness);
+                  const dx = Math.cos(angle) * d;
+                  const dy = Math.sin(angle) * d;
+                  // Equal padding from edges based on circle size + fixed margin
+                  const padPct = pxToPct(12);
+                  const childPct = pxToPct(radiusChild);
+                  const minPct = padPct + childPct;
+                  const maxPct = 100 - minPct;
+                  const x = Math.min(maxPct, Math.max(minPct, c0.x + pxToPct(dx)));
+                  const y = Math.min(maxPct, Math.max(minPct, c0.y + pxToPct(dy)));
+                  return { x, y };
+                };
+                // Desired angles: Positive (green) upper-right, Negative (red) lower-left
+                const angleFor = (name:string) => name === 'Positive' ? 12 : name === 'Negative' ? 200 : -26;
+                const overlapFor = (name:string) => name === 'Positive' ? 0.60 : name === 'Negative' ? 0.38 : 0.35;
+                const childTightness = 0.56;
+                const bubbles = [
+                  { name: main.name, value: main.value, x: c0.x, y: c0.y, r: main.r, z: main.value, fill: main.fill },
+                  ...others.map((o)=>{
+                    const a = angleFor(o.name);
+                    const c = placeAround(main.r, o.r, a, childTightness, overlapFor(o.name));
+                    return { name: o.name, value: o.value, x: c.x, y: c.y, r: o.r, z: o.value, fill: o.fill };
+                  })
+                ];
+                const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+                const labelColor = isDark ? '#ffffff' : '#111827';
                 return (
                   <Scatter data={bubbles} shape={(props: any) => {
                     const { cx, cy, fill, node } = props as any;
@@ -58,7 +91,7 @@ export default function OverallSentimentCard({ donutData }: { donutData: { name:
                     return (
                       <g filter="url(#bubbleShadow)">
                         <circle cx={cx} cy={cy} r={r} fill={fill} opacity={0.9} stroke="rgba(255,255,255,0.25)" strokeWidth={2} />
-                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={Math.max(12, r * 0.42)} fill="#ffffff">
+                        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={Math.max(14, r * 0.46)} fill={labelColor}>
                           {`${Math.round((props?.payload?.value ?? 0))}%`}
                         </text>
                       </g>
