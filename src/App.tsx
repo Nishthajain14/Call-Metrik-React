@@ -11,6 +11,8 @@ import Login from './pages/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LoadingProvider } from './context/LoadingContext';
+import { NotificationProvider } from './context/NotificationContext';
+import Toasts from './components/Toasts';
 import './index.css';
 
 function AppLayout({ children, title }) {
@@ -42,8 +44,10 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <LoadingProvider>
-          <BrowserRouter>
-            <Routes>
+          <NotificationProvider>
+            <BrowserRouter>
+              <Toasts />
+              <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<RequireAuth title="Dashboard"><Dashboard /></RequireAuth>} />
               <Route path="/audio-analysis" element={<RequireAuth title="Audio Analysis"><AudioAnalysisMonthly /></RequireAuth>} />
@@ -53,8 +57,9 @@ export default function App() {
               <Route path="/reports" element={<RequireAuth title="Reports"><Reports /></RequireAuth>} />
             </Routes>
           </BrowserRouter>
-        </LoadingProvider>
-      </AuthProvider>
-    </ThemeProvider>
+        </NotificationProvider>
+      </LoadingProvider>
+    </AuthProvider>
+  </ThemeProvider>
   );
 }

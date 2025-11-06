@@ -3,6 +3,7 @@ import { Upload, Link2 } from 'lucide-react';
 import { AudioUploadAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useLoading } from '../context/LoadingContext';
+import { useNotifications } from '../context/NotificationContext';
 
 
 export default function UploadAudio() {
@@ -13,8 +14,7 @@ export default function UploadAudio() {
   const [dragOver, setDragOver] = useState(false);
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const { notify } = useNotifications();
   const tabsRef = useRef(null);
   const groupRef = useRef(null);
   const fileBtnRef = useRef(null);
@@ -45,8 +45,6 @@ export default function UploadAudio() {
   function onPick(e) {
     const list = Array.from(e.target.files || []);
     setFiles(list);
-    setMessage('');
-    setError('');
   }
 
   function onDrop(e) {
@@ -54,8 +52,6 @@ export default function UploadAudio() {
     setDragOver(false);
     const list = Array.from(e.dataTransfer.files || []);
     setFiles(list);
-    setMessage('');
-    setError('');
   }
 
   async function onUploadFiles() {
@@ -63,14 +59,12 @@ export default function UploadAudio() {
       if (!files.length || !userId) return;
       setLoading(true);
       setGlobalLoading(true);
-      setMessage('');
-      setError('');
       const res = await AudioUploadAPI.uploadFile(userId, files);
-      setMessage(typeof res === 'string' ? res : 'Uploaded successfully');
+      notify({ type: 'success', message: (typeof res === 'string' ? res : 'Audio files uploaded successfully'), position: 'center' });
       setFiles([]);
     } catch (e) {
       const msg = getErrorMessage(e, 'Failed to upload');
-      setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
+      notify({ type: 'error', message: (isNetworkError(e) ? 'Network error. Please check your connection.' : msg), position: 'center' });
     } finally {
       setLoading(false);
       setGlobalLoading(false);
@@ -82,14 +76,12 @@ export default function UploadAudio() {
       if (!url.trim() || !userId) return;
       setLoading(true);
       setGlobalLoading(true);
-      setMessage('');
-      setError('');
       const res = await AudioUploadAPI.uploadUrl(userId, url.trim());
-      setMessage(typeof res === 'string' ? res : 'URL submitted successfully');
+      notify({ type: 'success', message: (typeof res === 'string' ? res : 'Audio URL uploaded successfully'), position: 'center' });
       setUrl('');
     } catch (e) {
       const msg = getErrorMessage(e, 'Failed to submit URL');
-      setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
+      notify({ type: 'error', message: (isNetworkError(e) ? 'Network error. Please check your connection.' : msg), position: 'center' });
     } finally {
       setLoading(false);
       setGlobalLoading(false);
@@ -174,11 +166,7 @@ export default function UploadAudio() {
         )}
       </div>
 
-      {(message || error) && (
-        <div className={`p-3 rounded-md text-sm ${error? 'bg-red-100 text-red-700 border border-red-300 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800':'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'}`}>
-          {error || message}
-        </div>
-      )}
+      {/* Notifications are shown via global Toasts */}
     </div>
   );
 }

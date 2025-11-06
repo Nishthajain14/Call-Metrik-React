@@ -15,8 +15,7 @@ import QuestionnairePanel from '../components/AudioDetails/QuestionnairePanel';
 import AgentFeedbackPanel from '../components/AudioDetails/AgentFeedbackPanel';
 import KeywordsTable from '../components/AudioDetails/KeywordsTable';
 import { useLoading } from '../context/LoadingContext';
-
- 
+import { useNotifications } from '../context/NotificationContext';
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 function readCache(key){
@@ -30,6 +29,8 @@ export default function AudioDetails() {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const { setLoading: setGlobalLoading } = useLoading();
+  const { notify } = useNotifications();
+
   const [insights, setInsights] = useState(null);
   const [audioUrl, setAudioUrl] = useState('');
   const [tab, setTab] = useState('Transcription');
@@ -249,19 +250,23 @@ export default function AudioDetails() {
   async function onSaveQuestionnaire(updated) {
     try {
       setSaving(true);
-      // Build payload expected by backend: { userId, audioId, responses: [{ qCode, manualAudit: boolean }] }
-      const responses = [];
+      // Build payload from only CHANGED answers made in this session
+      // Include item if user selected a boolean and it differs from existing manualAnswer
+      const responses = [] as { qCode: string; manualAudit: boolean }[];
       (updated || []).forEach((g) => {
         (g.items || g.questions || []).forEach((q) => {
           if (!q?.qCode) return;
-          const val = typeof q.answer === 'boolean' ? q.answer : (typeof q.manualAnswer === 'boolean' ? q.manualAnswer : undefined);
-          if (typeof val === 'boolean') {
-            responses.push({ qCode: q.qCode, manualAudit: val });
+          const selected = (typeof q.answer === 'boolean') ? q.answer : undefined;
+          if (typeof selected === 'boolean') {
+            if (typeof q.manualAnswer !== 'boolean' || selected !== q.manualAnswer) {
+              responses.push({ qCode: q.qCode, manualAudit: selected });
+            }
           }
         });
       });
       if (!responses.length) {
-        alert('Please answer at least one question (true/false) before submitting.');
+        notify({ type: 'warning', message: 'Edit at least one answer before submitting.', position: 'center' });
+        setSaving(false);
         return;
       }
       // Debug logs to verify payload and identifiers
@@ -274,11 +279,28 @@ export default function AudioDetails() {
 
       if (!userId) return;
       await AudioAPI.updateManualAudit(userId, audioId, responses);
-      // optimistic store
-      setInsights((prev) => ({ ...prev, questionnaireGroups: updated }));
+      // Re-fetch questionnaire from backend to display persisted manual answers
+      try {
+        const insRaw = await AudioAPI.audioInsights(userId, audioId);
+        const arr = Array.isArray(insRaw) ? insRaw : (insRaw?.data || []);
+        const base = arr[0] || {};
+        const freshGroups = (base?.questionnaire?.structured_QA || []).map((sec: any) => ({
+          title: sec.key,
+          items: (sec.items || []).map((q: any) => ({
+            qCode: q.qCode,
+            question: q.question,
+            citation: q.citation,
+            aiAnswer: q.answer,
+            manualAnswer: q.manualAudit,
+            answer: typeof q.manualAudit === 'boolean' ? String(q.manualAudit) : (typeof q.answer === 'boolean' ? String(q.answer) : ''),
+          })),
+        }));
+        setInsights((prev: any) => ({ ...prev, questionnaireGroups: freshGroups }));
+      } catch {}
+      notify({ type: 'success', message: 'Manual answer saved successfully.', position: 'center' });
+      setSaving(false);
     } catch (e) {
-      alert(e?.message || 'Failed to save');
-    } finally {
+      notify({ type: 'error', message: e?.message || 'Failed to save', position: 'center' });
       setSaving(false);
     }
   }
@@ -307,7 +329,20 @@ export default function AudioDetails() {
 
       {/* Tabs (neutral container, no ambient glow) */}
       <div className="card p-4">
-        <TabsNav tabs={tabs} tab={tab} setTab={setTab} />
+        <TabsNav
+          tabs={tabs}
+          tab={tab}
+          setTab={setTab}
+          rightAction={tab === 'Questionnaire' ? (
+            <button
+              className="btn-primary disabled:opacity-60 text-sm px-3 py-1.5 rounded-md"
+              disabled={saving}
+              onClick={() => onSaveQuestionnaire((insights?.questionnaireGroups || insights?.questionnaire || []))}
+            >
+              {saving ? 'Saving...' : 'Submit'}
+            </button>
+          ) : null}
+        />
 
         {/* Content simple placeholders bound to insights */}
         {tab === 'Transcription' && (

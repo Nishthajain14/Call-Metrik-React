@@ -2,9 +2,6 @@ export default function QuestionnairePanel({ groups, openSections, setOpenSectio
   const sections = groups || [];
   return (
     <div className="space-y-5">
-      <div className="sticky top-0 z-10 -mt-2 pb-2 bg-white/70 backdrop-blur border-b border-neutral-200 flex justify-end dark:bg-neutral-900/80 dark:border-neutral-800">
-        <button disabled={saving} onClick={() => onSubmit(sections)} className="btn-primary disabled:opacity-60 text-sm px-3 py-1.5 rounded-md">{saving ? 'Saving...' : 'Submit'}</button>
-      </div>
       {sections.map((group, gi) => {
         const title = group?.title || group?.name || `Section ${gi + 1}`;
         const items = group?.items || group?.questions || [];
@@ -27,11 +24,14 @@ export default function QuestionnairePanel({ groups, openSections, setOpenSectio
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-start gap-1">
                         {typeof q.aiAnswer !== 'undefined' && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-700 border border-violet-500/30 dark:text-violet-300">AI Answer: {String(q.aiAnswer)}</span>
                         )}
-                        <div className="flex items-center gap-2 text-xs">
+                        {typeof q.manualAnswer === 'boolean' && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 dark:text-amber-300">Manual Answer: {String(q.manualAnswer)}</span>
+                        )}
+                        <div className="flex items-center gap-2 text-xs mt-1">
                           <span className="text-neutral-600 dark:text-neutral-400">Manual:</span>
                           <label className="inline-flex items-center gap-1">
                             <input
