@@ -2,7 +2,7 @@ import React from 'react';
 import { TrendingUp } from 'lucide-react';
 import { ResponsiveContainer, CartesianGrid, Tooltip, XAxis, YAxis } from 'recharts';
 import { LineChart, Line } from 'recharts';
-import { AreaChart, Area } from 'recharts';
+import { Area } from 'recharts';
 
 function DatewiseTooltip(props: any){
   const { active, label, payload } = props || {};

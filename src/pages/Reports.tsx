@@ -23,22 +23,7 @@ export default function Reports() {
     cards, callDist, peak, funnel, agentReport, events, adherence, scoreCard,
     loading, error,
   } = useReportsData(userId);
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    // detect tailwind dark class or system preference
-    const check = () => setIsDark(document.documentElement.classList.contains('dark') || window.matchMedia?.('(prefers-color-scheme: dark)').matches);
-    check();
-    const mq = window.matchMedia?.('(prefers-color-scheme: dark)');
-    const handler = () => check();
-    mq?.addEventListener?.('change', handler);
-    const obs = new MutationObserver(check);
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => {
-      mq?.removeEventListener?.('change', handler);
-      obs.disconnect();
-    };
-  }, []);
+  // removed unused dark-mode watcher
 
   useEffect(() => { setGlobalLoading(loading); }, [loading, setGlobalLoading]);
 
@@ -74,7 +59,7 @@ export default function Reports() {
     );
   }, [funnelData, funnelFilter]);
 
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  // removed unused months array
 
   const timeline = useMemo(() => {
     const d = scoreCard || {};
