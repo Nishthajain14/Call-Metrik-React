@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
@@ -14,6 +15,7 @@ import { LoadingProvider } from './context/LoadingContext';
 import { NotificationProvider } from './context/NotificationContext';
 import Toasts from './components/Toasts';
 import './index.css';
+import smallLogo from './assets/small-callmetrik-nobg.png';
 
 function AppLayout({ children, title }) {
   return (
@@ -29,6 +31,15 @@ function AppLayout({ children, title }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    try {
+      if (document.title !== 'CallMetrik') document.title = 'CallMetrik';
+      const link: HTMLLinkElement = (document.querySelector("link[rel='icon']") as HTMLLinkElement) || document.createElement('link');
+      link.rel = 'icon';
+      link.href = smallLogo as unknown as string;
+      if (!link.parentNode) document.head.appendChild(link);
+    } catch {}
+  }, []);
   function RequireAuth({ children, title }){
     const { isLoading, session } = useAuth();
     if (isLoading) return (
