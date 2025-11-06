@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Link2, FileText, FolderOpen, Upload as UploadIcon } from 'lucide-react';
+import { ChevronLeft, Link2, FileText, FolderOpen } from 'lucide-react';
 import { AudioAPI, AudioProcessAPI, getErrorMessage, isNetworkError } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useLoading } from '../context/LoadingContext';

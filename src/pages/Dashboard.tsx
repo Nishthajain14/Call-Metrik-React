@@ -67,33 +67,6 @@ export default function Dashboard() {
     ];
   }, [kpi]);
 
-  const sankeyData = useMemo(() => {
-    const d = (kpi?.data || kpi) || {};
-    const sp = d.speechPercentage || {};
-    const os = d.overallSentiment || {};
-    const customer = Number(sp.customerAvg ?? 0);
-    const sales = Number(sp.salespersonAvg ?? 0);
-    const pos = Number(os.avgPositivePercentage ?? 0);
-    const neg = Number(os.avgNegativePercentage ?? 0);
-    const neu = Number(os.avgNeutralPercentage ?? 0);
-    const nodes = [
-      { name: 'Customer' },
-      { name: 'Salesperson' },
-      { name: 'Conversation' },
-      { name: 'Positive' },
-      { name: 'Negative' },
-      { name: 'Neutral' },
-    ];
-    const links = [
-      { source: 0, target: 2, value: Math.max(customer, 0.01), color: '#7c3aed' },
-      { source: 1, target: 2, value: Math.max(sales, 0.01), color: '#a78bfa' },
-      { source: 2, target: 3, value: Math.max(pos, 0.01), color: '#22c55e' },
-      { source: 2, target: 4, value: Math.max(neg, 0.01), color: '#ef4444' },
-      { source: 2, target: 5, value: Math.max(neu, 0.01), color: '#60a5fa' },
-    ];
-    return { nodes, links };
-  }, [kpi]);
-
   useEffect(() => { setGlobalLoading(loading); }, [loading, setGlobalLoading]);
 
   return (
