@@ -15,8 +15,8 @@ export default function QuestionnairePanel({ groups, openSections, setOpenSectio
               <div className="mt-2 space-y-3">
                 {items.map((q, i) => (
                   <div key={i} className="rounded-xl border border-neutral-200 dark:border-neutral-800 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium font-display text-neutral-900 dark:text-neutral-100"><span className="mr-2 text-neutral-500">Q{String(i + 1)}</span>{q.question || q.title}</div>
                         {q.citation && (
                           <div className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
@@ -31,7 +31,7 @@ export default function QuestionnairePanel({ groups, openSections, setOpenSectio
                         {typeof q.manualAnswer === 'boolean' && (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-500/30 dark:text-amber-300">Manual Answer: {String(q.manualAnswer)}</span>
                         )}
-                        <div className="flex items-center gap-2 text-xs mt-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs mt-1">
                           <span className="text-neutral-600 dark:text-neutral-400">Manual:</span>
                           <label className="inline-flex items-center gap-1">
                             <input

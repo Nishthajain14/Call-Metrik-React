@@ -11,7 +11,7 @@ export default function OverallSentimentCard({ donutData }: { donutData: { name:
         <span className="inline-flex items-center gap-2"><PieIcon size={16} /> Overall Sentiment</span>
         <Info text="Positive vs Neutral vs Negative sentiment split" />
       </div>
-      <div className="h-72">
+      <div className="h-64 sm:h-72 lg:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
             <defs>

@@ -307,7 +307,7 @@ export default function AudioDetails() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 glass surface rounded-xl px-3 py-2">
         <div className="flex items-center gap-2">
           <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-200 text-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-300"><ChevronLeft size={18} /></button>
           <div className="text-xl font-semibold font-display">Call Details</div>

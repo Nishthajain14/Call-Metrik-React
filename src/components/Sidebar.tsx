@@ -21,18 +21,32 @@ export default function Sidebar() {
     }
   });
 
+  // Track if sidebar is open as overlay on small screens
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   // Sync CSS variable so content shifts correctly
   useEffect(() => {
-    const width = collapsed ? '4rem' : '16rem';
-    document.documentElement.style.setProperty('--sidebar-width', width);
+    const applyWidth = () => {
+      const isSmall = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+      const width = isSmall ? '0px' : (collapsed ? '4rem' : '16rem');
+      document.documentElement.style.setProperty('--sidebar-width', width);
+      try { window.dispatchEvent(new CustomEvent('sidebar-state', { detail: { collapsed: isSmall ? true : collapsed } })); } catch {}
+      if (!isSmall) setMobileOpen(false);
+    };
+    applyWidth();
     try { localStorage.setItem('sidebar:collapsed', String(collapsed)); } catch {}
-    // notify listeners (Navbar) of current state
-    try { window.dispatchEvent(new CustomEvent('sidebar-state', { detail: { collapsed } })); } catch {}
+    const onResize = () => applyWidth();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, [collapsed]);
 
   // Listen for navbar toggle requests
   useEffect(() => {
-    const onToggle = () => setCollapsed(v => !v);
+    const onToggle = () => {
+      const isSmall = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+      if (isSmall) setMobileOpen(v => !v);
+      else setCollapsed(v => !v);
+    };
     window.addEventListener('sidebar-toggle-request', onToggle);
     // emit initial state for navbar on mount
     try { window.dispatchEvent(new CustomEvent('sidebar-state', { detail: { collapsed } })); } catch {}
@@ -48,6 +62,8 @@ export default function Sidebar() {
     }`;
 
   return (
+    <>
+    {/* Desktop/Tablet sidebar */}
     <aside
       className="fixed inset-y-0 left-0 hidden md:flex flex-col z-40 transition-[width] duration-300 glass surface sidebar-ambient"
       style={{ width: collapsed ? '4rem' : '16rem' }}
@@ -84,5 +100,41 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+
+    {/* Mobile overlay sidebar */}
+    {mobileOpen && (
+      <div className="md:hidden fixed inset-0 z-50">
+        <div className="absolute inset-0 bg-black/40" onClick={()=>setMobileOpen(false)} />
+        <aside className="absolute left-0 top-0 h-full w-[16rem] max-w-[80vw] glass surface sidebar-ambient shadow-xl">
+          <div className="h-16 flex items-center justify-center px-3 relative">
+            <img src={theme === 'dark' ? bigLogoDark : bigLogoLight} alt="CallMetriK" className="h-14 object-contain" />
+          </div>
+          <nav className="flex-1 px-3 space-y-2 overflow-y-auto">
+            <NavLink to="/" className={navLinkClass} end onClick={()=>setMobileOpen(false)}>
+              <Home size={18} /> <span>Dashboard</span>
+            </NavLink>
+            <NavLink to="/audio-analysis" className={navLinkClass} onClick={()=>setMobileOpen(false)}>
+              <BarChart3 size={18} /> <span>Audio Analysis</span>
+            </NavLink>
+            <NavLink to="/upload" className={navLinkClass} onClick={()=>setMobileOpen(false)}>
+              <UploadCloud size={18} /> <span>Upload Audio</span>
+            </NavLink>
+            <NavLink to="/reports" className={navLinkClass} onClick={()=>setMobileOpen(false)}>
+              <FileText size={18} /> <span>Reports</span>
+            </NavLink>
+          </nav>
+          <div className="p-4">
+            <button
+              onClick={async ()=>{ await signOut(); setMobileOpen(false); navigate('/login', { replace: true }); }}
+              className="w-full px-4 py-2 flex items-center gap-2 justify-center glass surface hover:brightness-110"
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </aside>
+      </div>
+    )}
+    </>
   );
 }

@@ -6,12 +6,12 @@ import { AreaChart, Area } from 'recharts';
 
 export default function MonthlySentimentCard({ data }: { data: any[] }){
   return (
-    <div className="card-elevated p-4 lg:col-span-2 hover-lift">
+    <div className="card-elevated p-4 lg:col-span-2 hover-lift hide-legend-xs">
       <div className="font-semibold font-display mb-3 flex items-center glass surface rounded-lg px-3 py-2">
         <span className="inline-flex items-center gap-2"><TrendingUp size={16} /> Monthly Sentiment Analysis</span>
         <Info text="Shows monthly sentiment trends based on the analysed audio for each month" />
       </div>
-      <div className="h-72">
+      <div className="h-64 sm:h-72 lg:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
             <defs>
@@ -32,7 +32,7 @@ export default function MonthlySentimentCard({ data }: { data: any[] }){
             <XAxis dataKey="name" tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} />
             <YAxis tick={{ fill: 'var(--chart-tick)', fontSize: 12 }} domain={[0, 100]} />
             <Tooltip contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)' }} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: 10, paddingTop: 6 }} />
             <Area type="monotone" dataKey="positive" stroke="#22c55e" fill="url(#gPos)" isAnimationActive animationDuration={700} />
             <Area type="monotone" dataKey="neutral" stroke="#31639fff" fill="url(#gNeu)" isAnimationActive animationDuration={700} />
             <Area type="monotone" dataKey="negative" stroke="#ef4444" fill="url(#gNeg)" isAnimationActive animationDuration={700} />

@@ -248,7 +248,7 @@ export default function AudioAnalysisList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 glass surface rounded-xl px-3 py-2">
         <div className="flex items-center gap-2">
           <button onClick={()=>navigate(-1)} aria-label="Back" className="p-2 rounded-lg hover:bg-neutral-200 text-neutral-700 dark:hover:bg-neutral-800 dark:text-neutral-300"><ChevronLeft size={18} /></button>
           <div className="text-xl font-semibold">Analysed Audio Files</div>
@@ -256,7 +256,7 @@ export default function AudioAnalysisList() {
       {notice.text && (
         <div className={`text-sm px-3 py-2 rounded-md glass surface ${notice.type==='err' ? 'text-rose-300':'text-emerald-300'}`}>{notice.text}</div>
       )}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select value={pageSize} onChange={(e)=>setPageSize(Number(e.target.value))} className="input rounded-md">
             <option value={10}>10</option>
             <option value={50}>50</option>
@@ -470,11 +470,11 @@ export default function AudioAnalysisList() {
                 </div>
               </div>
             </div>
-            <div className="mt-6 flex items-center justify-between">
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <button onClick={()=>{ setFilters({ audioStatus: [], sentiment: [], uploadSource: [] }); }} className="rounded-md px-3 py-1.5 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Reset Filters</button>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                 <button onClick={()=>setShowFilters(false)} className="rounded-md px-3 py-1.5 text-sm border border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">Close</button>
-                <button onClick={()=>{ setShowFilters(false); load(); }} className="btn-primary rounded-md px-3 py-1.5 text-sm">Apply Filters</button>
+                <button onClick={()=>{ setShowFilters(false); load(); }} className="btn-primary rounded-md px-3 py-1.5 text-sm w-full sm:w-auto">Apply Filters</button>
               </div>
             </div>
           </div>

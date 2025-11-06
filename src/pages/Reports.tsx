@@ -86,26 +86,25 @@ export default function Reports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 glass surface rounded-xl px-3 py-2">
         <div className="text-xl font-semibold font-display">Reports</div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="text-sm muted">Call Status</div>
           <select
             value={callStatus}
             onChange={(e) => setCallStatus(e.target.value)}
-            className="input rounded-md"
+            className="input rounded-md w-full sm:w-auto"
           >
             <option value="both">Both</option>
             <option value="Fresh Call">Fresh Call</option>
             <option value="Followup Call">Followup Call</option>
           </select>
         </div>
-
       </div>
       {error && <div className="border border-red-600 text-red-700 dark:text-red-400 p-3 rounded-lg">{error}</div>}
 
       {/* KPI Cards with per-card gradients */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card title="YTD" subtitle="Last YTD" value={Number(cards?.ytd ?? 0)} lastValue={Number(cards?.lastYear ?? 0)} info="Total calls since the start of the year" variant="metric-purple" />
         <Card title="MTD" subtitle="Last MTD" value={Number(cards?.mtd ?? 0)} lastValue={Number(cards?.lastMonth ?? 0)} info="Total calls since the start of the month" variant="metric-teal" />
         <Card title="WTD" subtitle="Last WTD" value={Number(cards?.wtd ?? 0)} lastValue={Number(cards?.lastWeek ?? 0)} info="Total calls since the start of the week" variant="metric-orange" />
@@ -113,13 +112,13 @@ export default function Reports() {
       </div>
 
       {/* Call Time Distribution + Peak Hours */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1.6fr] gap-3 sm:gap-4">
         <CallTimeDistribution data={callDistData} />
         <PeakCallHours data={peakHoursData} />
       </div>
 
       {/* Call to Lead Conversion Ratio + Eventwise table side-by-side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         <FunnelConversion
           data={filteredFunnel}
           filter={funnelFilter}

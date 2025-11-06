@@ -19,15 +19,17 @@ function DatewiseTooltip(props: any){
 export default function DatewiseCountsCard({ data, viewRaw, setViewRaw }: { data: any[]; viewRaw: string; setViewRaw: (v: string) => void }){
   return (
     <div className="card-elevated p-4 hover-lift ambient">
-      <div className="flex items-center justify-between mb-3 glass surface rounded-lg px-3 py-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-3 glass surface rounded-lg px-3 py-2">
         <div className="font-semibold font-display inline-flex items-center gap-2"><TrendingUp size={16} /> Datewise Counts</div>
-        <div className="segmented">
-          {(['Monthly','Weekly','Daily'] as const).map((v)=> (
-            <button key={v} className={viewRaw===v? 'active' : ''} onClick={()=> setViewRaw(v)}>{v}</button>
-          ))}
+        <div className="max-w-full overflow-x-auto hide-scrollbar pt-0.5">
+          <div className="segmented" style={{ minWidth: 'max-content' }}>
+            {(['Monthly','Weekly','Daily'] as const).map((v)=> (
+              <button key={v} className={viewRaw===v? 'active' : ''} onClick={()=> setViewRaw(v)}>{v}</button>
+            ))}
+          </div>
         </div>
       </div>
-      <div className="h-64">
+      <div className="h-56 sm:h-64 lg:h-72">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
             <defs>

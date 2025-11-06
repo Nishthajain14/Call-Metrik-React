@@ -21,7 +21,7 @@ export default function FunnelConversion({ data, filter, onToggle }: { data: Fun
   return (
     <div className="card-elevated p-4 hover-lift">
       <div className="font-semibold font-display mb-3">Call To Lead Conversion Ratio</div>
-      <div className="h-[24rem] flex items-center justify-center">
+      <div className="h-[24rem] flex items-center justify-center funnel-chart">
         <ResponsiveContainer width="100%" height="100%" className="max-w-3xl">
           <FunnelChart margin={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <defs>

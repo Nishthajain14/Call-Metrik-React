@@ -285,3 +285,22 @@ code {
   .no-row-borders tbody tr { border-top: 0 !important; }
 }
 
+
+/* Extra-small screen helpers */
+@media (max-width: 420px) {
+  /* Hide Recharts legend when the container opts-in */
+  .hide-legend-xs .recharts-legend-wrapper { display: none !important; }
+}
+
+/* Hide scrollbars while keeping scroll behavior */
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Funnel chart: smaller label font on small screens */
+@media (max-width: 640px) {
+  .funnel-chart .recharts-label-list text {
+    font-size: 12px !important;
+    font-weight: 600;
+  }
+}
+

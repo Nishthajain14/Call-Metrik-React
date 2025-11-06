@@ -51,13 +51,13 @@ export default function AudioAnalysisMonthly() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between glass surface rounded-xl px-3 py-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 glass surface rounded-xl px-3 py-2">
         <div className="text-xl font-semibold font-display">Monthwise Audio Analysis</div>
         <Link to="/upload" className="btn-gradient text-sm px-3 py-1.5 rounded-md">Add New Audio</Link>
       </div>
 
       <div className="card-elevated p-4 hover-lift">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-3">
           <div className="font-semibold font-display">Month View of Analysed Audio Files</div>
           <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="input rounded-md">
             {Array.from({ length: 5 }).map((_, i) => {
