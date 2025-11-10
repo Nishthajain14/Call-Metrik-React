@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import smallLogoLight from '../assets/small-callmetrik-nobg.png';
+import smallLogoDark from '../assets/small-cm-nobg-dark.png';
 
 export default function Login(){
   const { signIn, session, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,7 +33,11 @@ export default function Login(){
     <div className="min-h-screen flex items-center justify-center text-neutral-900 dark:text-neutral-100 p-4">
       <div className="w-full max-w-sm rounded-2xl glass surface p-6 animate-fadeIn">
         <div className="text-center mb-4">
-          <div className="mx-auto mb-2 h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 animate-floaty" />
+          <img
+            src={theme === 'dark' ? smallLogoDark : smallLogoLight}
+            alt="CallMetrik"
+            className="mx-auto mb-2 h-12 w-12 object-contain"
+          />
           <div className="text-xl font-semibold">Welcome Back</div>
           <div className="text-sm text-neutral-600 dark:text-neutral-400">Please enter login credentials.</div>
         </div>
