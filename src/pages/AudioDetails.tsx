@@ -35,7 +35,6 @@ export default function AudioDetails() {
   const [audioUrl, setAudioUrl] = useState('');
   const [tab, setTab] = useState('Transcription');
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
   const audioRef = useRef(null);
   const [rate, setRate] = useState(1);
   const [openSections, setOpenSections] = useState({});
@@ -229,7 +228,7 @@ export default function AudioDetails() {
         writeCache(key, { insights: norm, audioUrl: resolvedUrl });
       } catch (e) {
         const msg = getErrorMessage(e, 'Failed to load details');
-        setError(isNetworkError(e) ? 'Network error. Please check your connection.' : msg);
+        notify({ type: 'error', message: (isNetworkError(e) ? 'Network error. Please check your connection.' : msg) });
       } finally {
         setGlobalLoading(false);
       }
@@ -237,7 +236,7 @@ export default function AudioDetails() {
     }
     load();
     return () => { on = false; };
-  }, [audioId, userId]);
+  }, [audioId, userId, setGlobalLoading, notify]);
 
   useEffect(() => {
     if (audioRef.current) {

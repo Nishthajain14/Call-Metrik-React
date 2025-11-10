@@ -19,7 +19,6 @@ export default function UploadAudio() {
   const groupRef = useRef(null);
   const fileBtnRef = useRef(null);
   const urlBtnRef = useRef(null);
-  const [underline, setUnderline] = useState({ left: 0, width: 0 });
 
   useEffect(() => {
     function recalc() {
@@ -27,13 +26,6 @@ export default function UploadAudio() {
       const urlBtn = urlBtnRef.current;
       const wrap = groupRef.current || tabsRef.current;
       if (!fileBtn || !urlBtn || !wrap) return;
-      const activeBtn = (tab === 'file' ? fileBtn : urlBtn);
-      const b = activeBtn.getBoundingClientRect();
-      const w = wrap.getBoundingClientRect();
-      const half = w.width / 2;
-      const idx = (tab === 'file' ? 0 : 1);
-      const left = (idx * half) + (half - b.width) / 2; // center within half
-      setUnderline({ left, width: b.width });
     }
     recalc();
     const ro = new ResizeObserver(() => recalc());

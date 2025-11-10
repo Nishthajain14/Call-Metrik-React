@@ -1,8 +1,6 @@
 export default function MetaDataCard({ insights }) {
   const langs = Array.isArray(insights?.language) ? insights?.language?.filter(Boolean) : [insights?.language]?.filter(Boolean);
-  const translated = insights?.languageTranslated || insights?.translatedLanguage || (typeof insights?.language === 'string' ? insights?.language : undefined);
-  const spoken = (insights?.languagesSpoken || insights?.spokenLanguages || insights?.detectedLanguages || (Array.isArray(insights?.language) ? insights?.language : []) || [])
-    .filter(Boolean);
+  
   const customer = Number(insights?.talkListen?.customer ?? NaN);
   const agent = Number(insights?.talkListen?.agent ?? NaN);
   const fmtPct = (n: number) => (isFinite(n) ? `${n.toFixed(2)}%` : '-');

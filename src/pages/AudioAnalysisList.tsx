@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Link2, FileText, FolderOpen } from 'lucide-react';
 import { AudioAPI, AudioProcessAPI, getErrorMessage, isNetworkError } from '../lib/api';
@@ -49,7 +49,7 @@ export default function AudioAnalysisList() {
   const [busy, setBusy] = useState({}); // { [audioId]: true }
   const [notice, setNotice] = useState({ type: '', text: '' });
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       if (!userId) return;
       const cacheK = keyRows(userId, month, year, filters);
@@ -73,9 +73,9 @@ export default function AudioAnalysisList() {
       setLoading(false);
       setGlobalLoading(false);
     }
-  }
+  }, [userId, month, year, filters, setGlobalLoading]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [month, year, JSON.stringify(filters), userId]);
+  useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
     async function loadOptions(){
@@ -206,6 +206,8 @@ export default function AudioAnalysisList() {
     const start = (page - 1) * pageSize;
     return filtered.slice(start, start + pageSize);
   }, [filtered, page, pageSize]);
+
+  
 
   useEffect(() => {
     if (page > totalPages) setPage(1);

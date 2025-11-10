@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLoading } from '../context/LoadingContext';
 import KPICardGrid from '../components/Dashboard/KPICardGrid';
@@ -8,10 +8,6 @@ import OverallSentimentCard from '../components/Dashboard/OverallSentimentCard';
 import TopKeywordsCard from '../components/Dashboard/TopKeywordsCard';
 import useDashboardData from '../hooks/useDashboardData';
 
-function monthName(date = new Date()) {
-  return date.toLocaleString('en-US', { month: 'long' });
-}
-
 function number(x) {
   if (x == null) return '-';
   if (typeof x === 'string' && /\d+:\d{2}:\d{2}/.test(x)) return x; // already formatted duration
@@ -20,7 +16,7 @@ function number(x) {
 
 export default function Dashboard() {
   const { userId } = useAuth();
-  const { loading, error, kpi, counts, sentimentMonthly, datewise, view, setViewRaw, viewRaw } = useDashboardData(userId);
+  const { loading, error, kpi, sentimentMonthly, datewise, setViewRaw, viewRaw } = useDashboardData(userId);
   const { setLoading: setGlobalLoading } = useLoading();
 
   const kpis = useMemo(() => {

@@ -43,7 +43,7 @@ export default function AudioAnalysisMonthly() {
     }
     load();
     return () => { on = false; };
-  }, [year, userId]);
+  }, [year, userId, setGlobalLoading]);
 
   const months = useMemo(() => [
     'January','February','March','April','May','June','July','August','September','October','November','December'
