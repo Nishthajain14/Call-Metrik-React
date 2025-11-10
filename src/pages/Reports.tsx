@@ -23,7 +23,6 @@ export default function Reports() {
     cards, callDist, peak, funnel, agentReport, events, adherence, scoreCard,
     loading, error,
   } = useReportsData(userId);
-  // removed unused dark-mode watcher
 
   useEffect(() => { setGlobalLoading(loading); }, [loading, setGlobalLoading]);
 
@@ -58,8 +57,6 @@ export default function Reports() {
       (d.stage === 'Follow-up Calls' && funnelFilter.followup)
     );
   }, [funnelData, funnelFilter]);
-
-  // removed unused months array
 
   const timeline = useMemo(() => {
     const d = scoreCard || {};

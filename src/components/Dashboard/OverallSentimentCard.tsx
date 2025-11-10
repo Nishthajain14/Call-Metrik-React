@@ -92,7 +92,7 @@ export default function OverallSentimentCard({ donutData }: { donutData: { name:
                       <g filter="url(#bubbleShadow)">
                         <circle cx={cx} cy={cy} r={r} fill={fill} opacity={0.9} stroke="rgba(255,255,255,0.25)" strokeWidth={2} />
                         <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={Math.max(14, r * 0.46)} fill={labelColor}>
-                          {`${Math.round((props?.payload?.value ?? 0))}%`}
+                          {`${props?.payload?.value ?? 0}%`}
                         </text>
                       </g>
                     );
