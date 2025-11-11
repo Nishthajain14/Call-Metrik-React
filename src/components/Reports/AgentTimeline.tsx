@@ -34,15 +34,32 @@ export default function AgentTimeline({ users, dates, grid, scoreType, month, on
                     {u}
                   </div>
                   {grid[ri]?.map?.((val: any, ci: number) => {
-                    const v = val === '-' ? 0 : Number(val) || 0;
-                    let t = Math.max(0, Math.min(1, v / 100));
-                    t = Math.pow(t, 0.5);
-                    const hue = 250 - 190 * t;
-                    const sat = 70 + 20 * t;
-                    const light = 88 - 38 * t;
-                    const bg = v ? `hsl(${hue}deg ${sat}% ${light}%)` : 'var(--chart-grid)';
+                    const hasData = !(val === '-' || val === null || val === undefined || val === '');
+                    const v = hasData ? (Number(val) || 0) : 0;
+                    // Multi-stop gradient across ranges: 0-15-30-45-60-80-95-100
+                    const stops = [0, 15, 30, 45, 60, 80, 95, 100].map(x => x / 100);
+                    const H = [0, 10, 25, 40, 60, 85, 105, 120];
+                    const S = [85, 85, 84, 82, 80, 75, 70, 65];
+                    const L = [55, 54, 53, 52, 50, 50, 52, 54];
+                    const t = Math.max(0, Math.min(1, v / 100));
+                    let h = H[0], s = S[0], l = L[0];
+                    if (hasData) {
+                      for (let i = 0; i < stops.length - 1; i++) {
+                        const a = stops[i], b = stops[i + 1];
+                        if (t >= a && t <= b) {
+                          const p = (t - a) / (b - a);
+                          const lerp = (x: number, y: number) => x + (y - x) * p;
+                          h = lerp(H[i], H[i + 1]);
+                          s = lerp(S[i], S[i + 1]);
+                          l = lerp(L[i], L[i + 1]);
+                          break;
+                        }
+                      }
+                    }
+                    const bg = hasData ? `hsl(${h}deg ${s}% ${l}%)` : 'var(--chart-grid)';
+                    const title = hasData ? `${u} • ${dates[ci]}: ${v}%` : `${u} • ${dates[ci]}: No data`;
                     return (
-                      <div key={`${u}-${ci}`} className="h-4 sm:h-5 mx-0.5 sm:mx-[2px] my-1 sm:my-[3px] rounded-md shadow-sm transition-transform duration-150" style={{ background: bg }} title={`${u} • ${dates[ci]}: ${v}%`} onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.06)')} onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')} />
+                      <div key={`${u}-${ci}`} className="h-4 sm:h-5 mx-0.5 sm:mx-[2px] my-1 sm:my-[3px] rounded-md shadow-sm transition-transform duration-150" style={{ background: bg }} title={title} onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.06)')} onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1.0)')} />
                     );
                   })}
                 </React.Fragment>
@@ -51,8 +68,26 @@ export default function AgentTimeline({ users, dates, grid, scoreType, month, on
           </div>
           <div className="mt-3 flex items-center gap-2 sm:gap-3 justify-center sm:justify-end">
             <span className="text-xs text-neutral-500 dark:text-neutral-400">Low</span>
-            <div className="h-2 w-24 sm:w-40 rounded-full" style={{ background: 'linear-gradient(90deg, rgb(40,80,160) 0%, rgb(180,160,60) 50%, rgb(180,220,80) 100%)' }} />
+            <div
+              className="h-2 w-24 sm:w-40 rounded-full"
+              style={{
+                background:
+                  'linear-gradient(90deg,' +
+                  'hsl(0 85% 55%) 0%,' +
+                  'hsl(10 85% 54%) 15%,' +
+                  'hsl(25 84% 53%) 30%,' +
+                  'hsl(40 82% 52%) 45%,' +
+                  'hsl(60 80% 50%) 60%,' +
+                  'hsl(85 75% 50%) 80%,' +
+                  'hsl(105 70% 52%) 95%,' +
+                  'hsl(120 65% 54%) 100%)'
+              }}
+            />
             <span className="text-xs text-neutral-500 dark:text-neutral-400">High</span>
+            <div className="ml-2 flex items-center gap-1">
+              <div className="h-2 w-4 rounded" style={{ background: 'var(--chart-grid)' }} />
+              <span className="text-xs text-neutral-500 dark:text-neutral-400">No data</span>
+            </div>
           </div>
         </div>
       ) : (
