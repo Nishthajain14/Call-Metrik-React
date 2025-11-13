@@ -46,18 +46,22 @@ export default function useDashboardData(userId: string | number | undefined) {
     async function fetchAll() {
       try {
         if (!cached) setLoading(true);
-        const [kpiRes, countsRes, sentRes] = await Promise.all([
-          DashboardAPI.audioKPI(userId as any),
+        const kpiRes = await DashboardAPI.audioKPI(userId as any);
+        if (!mounted) return;
+        setKpi(kpiRes);
+        if (!cached) setLoading(false);
+
+        const countsPromise = (
           view === 'Monthly'
             ? DashboardAPI.monthwiseCounts(userId as any, year as any)
             : view === 'Weekly'
             ? DashboardAPI.weekwiseCounts(userId as any, month as any, year as any)
-            : DashboardAPI.datewiseCounts(userId as any, month as any, year as any),
-          DashboardAPI.sentimentMonthly(userId as any, year as any),
-        ]);
+            : DashboardAPI.datewiseCounts(userId as any, month as any, year as any)
+        );
+        const sentPromise = DashboardAPI.sentimentMonthly(userId as any, year as any);
+        const [countsRes, sentRes] = await Promise.all([countsPromise, sentPromise]);
         if (!mounted) return;
         const cnt = Array.isArray((countsRes as any)?.data) ? (countsRes as any).data : countsRes;
-        setKpi(kpiRes);
         setCounts(cnt);
         setSentimentMonthly(sentRes);
         writeCache(key, { kpi: kpiRes, counts: cnt, sentimentMonthly: sentRes });

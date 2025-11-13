@@ -1,12 +1,13 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, Suspense, lazy } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLoading } from '../context/LoadingContext';
 import KPICardGrid from '../components/Dashboard/KPICardGrid';
 import DatewiseCountsCard from '../components/Dashboard/DatewiseCountsCard';
-import MonthlySentimentCard from '../components/Dashboard/MonthlySentimentCard';
-import OverallSentimentCard from '../components/Dashboard/OverallSentimentCard';
 import TopKeywordsCard from '../components/Dashboard/TopKeywordsCard';
 import useDashboardData from '../hooks/useDashboardData';
+
+const MonthlySentimentCard = lazy(() => import('../components/Dashboard/MonthlySentimentCard'));
+const OverallSentimentCard = lazy(() => import('../components/Dashboard/OverallSentimentCard'));
 
 function number(x) {
   if (x == null) return '-';
@@ -73,8 +74,12 @@ export default function Dashboard() {
       <DatewiseCountsCard data={datewise} viewRaw={viewRaw} setViewRaw={setViewRaw} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        <MonthlySentimentCard data={sentMonthlySeries} />
-        <OverallSentimentCard donutData={donutData} />
+        <Suspense fallback={<div className="card-elevated p-4 h-64 sm:h-72 lg:h-80" />}> 
+          <MonthlySentimentCard data={sentMonthlySeries} />
+        </Suspense>
+        <Suspense fallback={<div className="card-elevated p-4 h-64 sm:h-72 lg:h-80" />}> 
+          <OverallSentimentCard donutData={donutData} />
+        </Suspense>
       </div>
 
       <TopKeywordsCard keywords={keywords} formatNumber={number} />
